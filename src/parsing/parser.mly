@@ -137,7 +137,7 @@ element:
 %inline optional_debug:
   { Utils.log_disabled }
 | DEBUG { Utils.log_full }
-| DEBUG i=LINT { Z.to_int i }
+| DEBUG i=lint { Z.to_int i }
 
 (* ===== TERMS ===== *)
 
@@ -213,13 +213,23 @@ atomic_term:
   id=ID EQUAL t=simple_term { (id, t) }
 
 literal:
-  f=LFLOAT { Float f }
-| i=LINT   { Int i }
+  f=lfloat { Float f }
+| i=lint   { Int i }
 | c=LCHAR  { Char c }
 | b=LBOOL  { Bool b }
 | s=LSTRING{ String s }
 | LUNIT    { Unit }
 | LNIL     { Nil }
+
+lfloat:
+  f=LFLOAT { f }
+| LPAREN PLUS f=LFLOAT RPAREN { f }
+| LPAREN MINUS f=LFLOAT RPAREN { -. f }
+
+lint:
+  i=LINT { i }
+| LPAREN PLUS i=LINT RPAREN { i }
+| LPAREN MINUS i=LINT RPAREN { Z.neg i }
 
 parameter:
   arg = ID { (Unnanoted, PatVar arg) }
@@ -292,8 +302,8 @@ atomic_typ:
 %inline type_constant:
   FLOAT { TFloat }
 | INT { TInt (None, None) }
-| i=LINT { TInt (Some i, Some i) }
-| LPAREN i1=LINT? DOUBLEPOINT i2=LINT? RPAREN { TInt (i1,i2) }
+| i=tint { TInt (Some i, Some i) }
+| LPAREN i1=tint? DOUBLEPOINT i2=tint? RPAREN { TInt (i1,i2) }
 | CHAR { TChar }
 | c=LCHAR { TCharInt (c,c) }
 | LPAREN c1=LCHAR MINUS c2=LCHAR RPAREN { TCharInt (c1,c2) }
@@ -311,6 +321,11 @@ atomic_typ:
 | ATOM_ANY { TAtomAny }
 | RECORD_ANY { TRecordAny }
 | str=LSTRING { TSString str }
+
+tint:
+  i=LINT { i }
+// | PLUS i=LINT { i } // conflict with with regexp
+| MINUS i=LINT { Z.neg i }
 
 (* ===== REGEX ===== *)
 

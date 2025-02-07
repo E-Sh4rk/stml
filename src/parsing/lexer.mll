@@ -25,11 +25,11 @@ let id = ['a'-'z''A'-'Z''_']['a'-'z''A'-'Z''0'-'9''_''\'']*
 
 let decimal = ['0'-'9']+ ('_'+ ['0'-'9']+)*
 
-let int = ('+'|'-')? decimal
+let int = decimal
 
 let float_e = decimal ['e' 'E'] (['-' '+']? decimal)?
 let float_comma = decimal '.' decimal (['e' 'E'] ['-' '+']? decimal)?
-let float = ('+'|'-')? (float_e | float_comma)
+let float = (float_e | float_comma)
 
 let type_var = '\'' ['a'-'z''A'-'Z''0'-'9']['a'-'z''A'-'Z''0'-'9''_']*
 let weak_type_var = '\'' '_' ['a'-'z''A'-'Z''0'-'9''_']*
