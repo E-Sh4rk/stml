@@ -29,6 +29,7 @@ val disj : typ list -> typ
 
 val mk_atom : string -> typ
 val atom_any : typ
+val tag_any : typ
 
 val mk_tuple : typ list -> typ
 val tuple_any : typ
@@ -42,11 +43,6 @@ val non_empty_list_typ : typ
 val mk_cons : typ -> typ -> typ
 val cons_dnf : typ -> (typ * typ) list
 val destruct_list : typ -> typ * typ
-
-(* type tag
-val list_tag : tag
-val mk_tag : tag -> typ -> typ
-val pi_tag : typ -> tag -> typ *)
 
 val to_label : string -> Sstt.Label.t
 val from_label : Sstt.Label.t -> string

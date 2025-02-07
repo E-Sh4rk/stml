@@ -58,6 +58,7 @@ let from_label lbl = Sstt.Label.name lbl
 
 let mk_atom name = name |> Sstt.Atoms.Atom.mk |> Sstt.Descr.mk_atom |> Sstt.Ty.mk_descr
 let atom_any = Sstt.Atoms.any () |> Sstt.Descr.mk_atoms |> Sstt.Ty.mk_descr
+let tag_any = Sstt.Tags.any () |> Sstt.Descr.mk_tags |> Sstt.Ty.mk_descr
 let true_typ = Sstt.Extensions.Bools.bool true
 let false_typ = Sstt.Extensions.Bools.bool false
 let bool_typ = Sstt.Extensions.Bools.any
@@ -93,13 +94,6 @@ let non_empty_list_typ = Sstt.Extensions.Lists.any_non_empty
 let mk_cons = Sstt.Extensions.Lists.cons
 let cons_dnf = Sstt.Extensions.Lists.destruct
 let destruct_list = Sstt.Extensions.Lists.destruct'
-
-(* type tag = Sstt.TagComp.Tag.t
-let list_tag = Sstt.Extensions.Lists.tag
-let mk_tag tag ty = Sstt.Descr.mk_tag (tag, ty) |> Sstt.Ty.mk_descr
-let pi_tag ty tag =
-  ty |> Sstt.Ty.get_descr |> Sstt.Descr.get_tags
-  |> Sstt.Tags.get tag |> Sstt.TagComp.as_atom |> snd *)
 
 let mk_record opened bindings =
   let bindings = bindings |>

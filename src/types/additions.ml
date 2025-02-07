@@ -13,7 +13,8 @@ exception TypeDefinitionError of string
 type type_base =
     | TInt of Z.t option * Z.t option | TCharInt of char * char | TSString of string
     | TBool | TTrue | TFalse | TUnit | TChar | TAny | TEmpty | TNil
-    | TString | TList | TFloat | TArrowAny | TTupleAny | TTupleN of int | TAtomAny | TRecordAny 
+    | TString | TList | TFloat | TArrowAny | TTupleAny | TTupleN of int | TAtomAny
+    | TTagAny | TRecordAny 
 
 type type_regexp = type_expr Sstt.Extensions.Lists.regexp
 
@@ -53,6 +54,7 @@ let type_base_to_typ t =
     | TArrowAny -> arrow_any
     | TTupleAny -> tuple_any
     | TTupleN n -> tuple_n n
+    | TTagAny -> tag_any
     | TAtomAny -> atom_any
     | TRecordAny -> record_any
 

@@ -90,6 +90,7 @@ rule token = parse
 | "float" { FLOAT }
 | "int"   { INT }
 | "arrow" { ARROW_ANY }
+| "tag"  { TAG_ANY }
 | "atom"  { ATOM_ANY }
 | "tuple" { TUPLE_ANY }
 | "record" { RECORD_ANY }
