@@ -4,15 +4,15 @@ function getTokenizer() {
         tokenPostfix: '.stml',
     
         keywords: [
-            'atoms', 'atom', 'type', 'where', 'and', 'if', 'is', 'then',
+            'atoms', 'type', 'where', 'and', 'if', 'is', 'then',
             'else', 'match', 'with', 'end', 'fun', 'let', 'in',
-            'fst', 'snd',  'magic', 'true', 'false',
-            'nil', 'unit', 'rec', 'gen'
+            'fst', 'snd', 'hd', 'tl', 'magic', 'true', 'false',
+            'nil', 'unit', 'rec', 'gen', 'debug'
         ],
 
         typeids: [
-            'Any', 'Empty', 'Bool', 'Char', 'Int', 'Float',
-            'Unit', 'True', 'False', 'String', 'List'
+            'any', 'empty', 'tuple', 'arrow', 'record', 'atom', 'tag',
+            'int', 'char', 'float', 'string', 'list', 'bool'
         ],
     
         operators: [
@@ -35,13 +35,13 @@ function getTokenizer() {
         tokenizer: {
             root: [
                 // identifiers and keywords
-                [/[a-z_][\w']*/, {
+                [/[A-Za-z_][\w']*/, {
                     cases: {
                         '@keywords': { token: 'keyword.$0' },
                         '@default': 'identifier.term'
                     }
                 }],
-                [/[A-Z][\w']*/, 'identifier.type'],
+                // [/[A-Z][\w']*/, 'identifier.type'],
     
                 // whitespace
                 { include: '@whitespace' },

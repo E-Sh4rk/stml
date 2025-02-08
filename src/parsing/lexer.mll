@@ -42,8 +42,6 @@ let prefix_op = ('!' | '?') op_char*
 let infix_op = ('=' | '<' | '>' | '@' | '^' | '|' | '&' |
                  '~' | '+' | '-' | '*' | '/' | '$' | '%') op_char*
 
-let tuple = "tuple" ['0'-'9']+
-
 rule token = parse
 | newline { enter_newline lexbuf |> token }
 | blank   { token lexbuf }
@@ -83,20 +81,6 @@ rule token = parse
 | "hd"    { HD }
 | "tl"    { TL }
 | "debug" { DEBUG }
-| "any"   { ANY }
-| "empty" { EMPTY }
-| "bool"  { BOOL }
-| "char"  { CHAR }
-| "float" { FLOAT }
-| "int"   { INT }
-| "arrow" { ARROW_ANY }
-| "tag"  { TAG_ANY }
-| "atom"  { ATOM_ANY }
-| "tuple" { TUPLE_ANY }
-| "record" { RECORD_ANY }
-| tuple as t { TUPLE (int_of_string (String.sub t 5 (String.length t - 5))) }
-| "string"{ STRING }
-| "list"  { LIST }
 | "("     { LPAREN }
 | ")"     { RPAREN }
 | "{"     { LBRACE }

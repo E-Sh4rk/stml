@@ -67,6 +67,29 @@
     | x::xs ->
       let left = x in let right = list_of_pats xs in
       PatCons (left,right)
+
+  let builtin_type_or_custom str =
+    match str with
+    | "empty" -> TBase TEmpty
+    | "any" -> TBase TAny
+    | "tuple" -> TBase TTupleAny
+    | "arrow" -> TBase TArrowAny
+    | "record" -> TBase TRecordAny
+    | "atom" -> TBase TAtomAny
+    | "tag" -> TBase TTagAny
+    | "int" -> TBase (TInt (None, None))
+    | "char" -> TBase TChar
+    | "float" -> TBase TFloat
+    | "string" -> TBase TString
+    | "list" -> TBase TList
+    | "bool" -> TBase TBool
+    | str ->
+      let regexp = Str.regexp {|^tuple\([0-9]*\)$|} in
+      if Str.string_match regexp str 0 then
+        let nb = Str.matched_group 1 str in
+        TBase (TTupleN (int_of_string nb))
+      else
+        TCustom ([], str)
 %}
 
 %token EOF
@@ -74,12 +97,10 @@
 %token IF IS THEN ELSE
 %token LPAREN RPAREN EQUAL COMMA CONS COLON COLON_OPT COERCE INTERROGATION_MARK EXCLAMATION_MARK
 %token ARROW AND OR NEG DIFF
-%token ANY EMPTY BOOL CHAR FLOAT INT STRING LIST ARROW_ANY TUPLE_ANY RECORD_ANY TAG_ANY ATOM_ANY
 %token TIMES PLUS MINUS DIV
 %token LBRACE RBRACE DOUBLEPOINT MATCH WITH END POINT LT GT
 %token ATOMS TYPE TYPE_AND WHERE
 %token LBRACKET RBRACKET SEMICOLON
-%token<int> TUPLE
 %token<string> ID
 %token<string> TVAR TVAR_WEAK
 %token<float> LFLOAT
@@ -283,7 +304,7 @@ simple_typ:
 
 atomic_typ:
   x=type_constant { TBase x }
-| s=ID { TCustom ([], s) }
+| s=ID { builtin_type_or_custom s }
 | s=TVAR { TVar s }
 | s=TVAR_WEAK { TVarWeak s }
 | LPAREN RPAREN { TBase TUnit }
@@ -300,28 +321,14 @@ atomic_typ:
 | id=ID COLON_OPT t=simple_typ { (id, t, true) }
 
 %inline type_constant:
-  FLOAT { TFloat }
-| INT { TInt (None, None) }
 | i=tint { TInt (Some i, Some i) }
 | LPAREN i1=tint? DOUBLEPOINT i2=tint? RPAREN { TInt (i1,i2) }
-| CHAR { TChar }
 | c=LCHAR { TCharInt (c,c) }
 | LPAREN c1=LCHAR MINUS c2=LCHAR RPAREN { TCharInt (c1,c2) }
-| BOOL { TBool }
 | b=LBOOL { if b then TTrue else TFalse }
-| LUNIT { TUnit }
-| EMPTY { TEmpty }
-| ANY { TAny }
-| LNIL { TNil }
-| STRING { TString }
-| LIST { TList }
-| ARROW_ANY { TArrowAny }
-| TUPLE_ANY { TTupleAny }
-| n=TUPLE { TTupleN n }
-| TAG_ANY { TTagAny }
-| ATOM_ANY { TAtomAny }
-| RECORD_ANY { TRecordAny }
 | str=LSTRING { TSString str }
+| LNIL { TNil }
+| LUNIT { TUnit }
 
 tint:
   i=LINT { i }
