@@ -447,7 +447,6 @@ let const_to_typ c =
     | String str -> single_string str
     | Atom t -> raise (SymbolError ("undefined atom "^t))
 
-type variance = Cov | Cav | Inv
 type parser_element =
 | Definition of (int (* log level *) * (string * parser_expr * type_expr option))
 | Atoms of string list

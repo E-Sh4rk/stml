@@ -85,7 +85,6 @@ val substitute : annot_expr -> Variable.t -> annot_expr -> annot_expr
 
 val const_to_typ : const -> typ
 
-type variance = Cov | Cav | Inv
 type parser_element =
 | Definition of (int (* log level *) * (string * parser_expr * type_expr option))
 | Atoms of string list

@@ -16,13 +16,14 @@ let pparams =
     Sstt.Extensions.Lists.printer_params' ;
     Sstt.Extensions.Chars.printer_params'
   ] |> Sstt.Printer.merge_params
+let pparams_abs = ref []
 let pp_typ fmt t =
   let pparams' = { Sstt.Printer.empty_params with aliases = !aliases } in
-  let pparams = [ pparams ; pparams' ] |> Sstt.Printer.merge_params in
+  let pparams = [ pparams ; pparams' ]@(!pparams_abs) |> Sstt.Printer.merge_params in
   Sstt.Printer.print_ty pparams fmt t
 let pp_subst fmt t =
   let pparams' = { Sstt.Printer.empty_params with aliases = !aliases } in
-  let pparams = [ pparams ; pparams' ] |> Sstt.Printer.merge_params in
+  let pparams = [ pparams ; pparams' ]@(!pparams_abs) |> Sstt.Printer.merge_params in
   Sstt.Printer.print_subst pparams fmt t
 
 let any = Sstt.Ty.any
@@ -59,6 +60,20 @@ let from_label lbl = Sstt.Label.name lbl
 let mk_atom name = name |> Sstt.Atoms.Atom.mk |> Sstt.Descr.mk_atom |> Sstt.Ty.mk_descr
 let atom_any = Sstt.Atoms.any () |> Sstt.Descr.mk_atoms |> Sstt.Ty.mk_descr
 let tag_any = Sstt.Tags.any () |> Sstt.Descr.mk_tags |> Sstt.Ty.mk_descr
+
+type variance = Cov | Cav | Inv
+type abstract = Sstt.TagComp.Tag.t
+let define_abstract name vs =
+  let aux = function
+  | Cov -> Sstt.Extensions.Abstracts.Cov
+  | Cav -> Sstt.Extensions.Abstracts.Contrav
+  | Inv -> Sstt.Extensions.Abstracts.Inv
+  in
+  let (tag,printer) = Sstt.Extensions.Abstracts.define' name (List.map aux vs) in
+  pparams_abs := printer::!pparams_abs ;
+  tag
+let mk_abstract = Sstt.Extensions.Abstracts.mk
+
 let true_typ = Sstt.Extensions.Bools.bool true
 let false_typ = Sstt.Extensions.Bools.bool false
 let bool_typ = Sstt.Extensions.Bools.any

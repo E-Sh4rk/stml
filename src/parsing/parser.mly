@@ -2,6 +2,7 @@
 
   open Ast
   open Types.Additions
+  open Types.Base
   open Sstt.Extensions
 
   let annot sp ep e =
