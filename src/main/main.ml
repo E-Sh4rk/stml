@@ -113,6 +113,7 @@ let parse_and_resolve f varm =
       | Ast.Types lst ->
         let tenv = define_types tenv empty_vtenv lst in
         (tenv,varm,defs)
+      | Ast.AbsType _ -> failwith "TODO"
     in
     let (tenv, _, defs) =
       List.fold_left treat_elem (empty_tenv, varm, []) ast in

@@ -100,6 +100,7 @@
 %token TIMES PLUS MINUS DIV
 %token LBRACE RBRACE DOUBLEPOINT MATCH WITH END POINT LT GT
 %token ATOMS TYPE TYPE_AND WHERE
+%token ABSTRACT INV COV CAV
 %token LBRACKET RBRACKET SEMICOLON
 %token<string> ID
 %token<string> TVAR TVAR_WEAK
@@ -146,6 +147,16 @@ element:
   }
 | ATOMS a=ID* { annot $symbolstartpos $endpos (Atoms a) }
 | TYPE ts=separated_nonempty_list(TYPE_AND, param_type_def) { annot $symbolstartpos $endpos (Types ts) }
+| ABSTRACT TYPE name=ID params=abs_params { annot $symbolstartpos $endpos (AbsType (name, params)) }
+
+%inline abs_params:
+  { [] }
+| LPAREN vs=separated_nonempty_list(COMMA, variance) RPAREN { vs }
+
+variance:
+  INV { Inv }
+| COV { Cov }
+| CAV { Cav }
 
 %inline gen_id_opt_annot:
   id=generalized_identifier { (id, None) }
@@ -281,7 +292,9 @@ prefix:
 
 (* ===== TYPES ===== *)
 
-%inline param_type_def: name=ID params=list(TVAR) EQUAL t=typ_norec { (name, params, t) }
+%inline param_type_def:
+| name=ID EQUAL t=typ_norec { (name, [], t) }
+| name=ID LPAREN params=separated_nonempty_list(COMMA, TVAR) RPAREN EQUAL t=typ_norec { (name, params, t) }
 
 typ:
   t=typ_norec { t }
@@ -294,7 +307,7 @@ typ_norec:
 
 simple_typ:
   t=atomic_typ { t }
-| s=ID ts=nonempty_list(atomic_typ) { TCustom(ts, s) }
+| s=ID LPAREN ts=separated_nonempty_list(COMMA, simple_typ) RPAREN { TCustom(ts, s) }
 | lhs=simple_typ ARROW rhs=simple_typ { TArrow (lhs, rhs) }
 | lhs=simple_typ CONS rhs=simple_typ  { TCons (lhs, rhs) }
 | NEG t=simple_typ { TNeg t }
