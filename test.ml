@@ -1,3 +1,11 @@
+(* ========= ABSTRACT TYPES ======== *)
+
+abstract type ref(-'a)
+
+let t = <ref(any)>
+let t = <ref(int) & ref(bool) & ~ref(any)>
+
+(* ================================= *)
 let succ = <int->int>
 
 let aliasing (x : any -> any) = 

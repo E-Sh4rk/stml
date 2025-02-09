@@ -50,9 +50,6 @@ rule token = parse
 | "where" { WHERE }
 | "and"   { TYPE_AND }
 | "abstract"  { ABSTRACT }
-| "inv"   { INV }
-| "cov"   { COV }
-| "cav"   { CAV }
 | "(*"    { comment 0 lexbuf }
 | "->"    { ARROW }
 | "&"     { AND }

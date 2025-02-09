@@ -100,8 +100,7 @@
 %token ARROW AND OR NEG DIFF
 %token TIMES PLUS MINUS DIV
 %token LBRACE RBRACE DOUBLEPOINT MATCH WITH END POINT LT GT
-%token ATOMS TYPE TYPE_AND WHERE
-%token ABSTRACT INV COV CAV
+%token ATOMS TYPE TYPE_AND WHERE ABSTRACT
 %token LBRACKET RBRACKET SEMICOLON
 %token<string> ID
 %token<string> TVAR TVAR_WEAK
@@ -155,9 +154,9 @@ element:
 | LPAREN vs=separated_nonempty_list(COMMA, variance) RPAREN { vs }
 
 variance:
-  INV { Inv }
-| COV { Cov }
-| CAV { Cav }
+  TVAR { Inv }
+| PLUS TVAR { Cov }
+| MINUS TVAR { Cav }
 
 %inline gen_id_opt_annot:
   id=generalized_identifier { (id, None) }
