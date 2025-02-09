@@ -37,11 +37,12 @@ type type_def = string * string list * type_expr
 type type_env = {
     aliases : typ StrMap.t ; (* User-defined non-parametric types *)
     atoms : StrSet.t ; (* Atoms *) 
-    defs : type_def list (* History of definitions *)
+    defs : type_def list ; (* History of definitions *)
+    abs : abstract StrMap.t (* Abstract types *)
 }
 type var_type_env = TVar.t StrMap.t (* Var types *)
 
-let empty_tenv = { aliases=StrMap.empty ; atoms=StrSet.empty ; defs=[] }
+let empty_tenv = { aliases=StrMap.empty ; atoms=StrSet.empty ; defs=[] ; abs=StrMap.empty }
 let empty_vtenv = StrMap.empty
 
 let type_base_to_typ t =
@@ -62,9 +63,14 @@ let type_base_to_typ t =
     | TAtomAny -> atom_any
     | TRecordAny -> record_any
 
-let get_non_parametric_type env name = StrMap.find_opt name env
+let get_non_parametric_type tenv name = StrMap.find_opt name tenv.aliases
+let get_abstract_type tenv name tys =
+    match StrMap.find_opt name tenv.abs with
+    | None -> None
+    | Some abs -> Some (mk_abstract abs tys)
 
-let derecurse_types history env venv defs =
+(* TODO: fix conflicts when an atom and an abstract type have the same name... *)
+let derecurse_types tenv venv defs =
     let venv =
         let h = Hashtbl.create 16 in
         StrMap.iter (fun n v -> Hashtbl.add h n v) venv ;
@@ -73,7 +79,7 @@ let derecurse_types history env venv defs =
     let henv = Hashtbl.create 16 in
     let eqs = ref [] in
     List.iter (fun (name, params, def) ->
-        Hashtbl.add henv name (def, params, [])) history ;
+        Hashtbl.add henv name (def, params, [])) tenv.defs ;
     let rec derecurse_types defs =
         List.iter (fun (name, params, def) ->
             Hashtbl.add henv name (def, params, [])) defs ;
@@ -97,12 +103,19 @@ let derecurse_types history env venv defs =
                 | Some (_, v) -> v
                 end
             | exception Not_found ->
-                begin match get_non_parametric_type env name with
+                begin match get_non_parametric_type tenv name with
                 | Some t ->
                     let v = TVar.mk_unregistered () in
                     eqs := (v,t)::!eqs ;
                     v
-                | None -> raise (TypeDefinitionError (Printf.sprintf "Type %s undefined!" name))
+                | None ->
+                    begin match get_abstract_type tenv name args with
+                    | Some t ->
+                        let v = TVar.mk_unregistered () in
+                        eqs := (v,t)::!eqs ;
+                        v    
+                    | None -> raise (TypeDefinitionError (Printf.sprintf "Type %s undefined!" name))
+                    end
                 end
         and aux lcl t =
             match t with
@@ -181,7 +194,7 @@ let derecurse_types history env venv defs =
     (res, venv)
 
 let type_expr_to_typ tenv venv t =
-    match derecurse_types tenv.defs tenv.aliases venv [ ("", [], t) ] with
+    match derecurse_types tenv venv [ ("", [], t) ] with
     | ([ "", [], t ], venv) -> (t, venv)
     | _ -> assert false
 
@@ -194,7 +207,7 @@ let type_exprs_to_typs env venv ts =
     (ts, !venv)
 
 let define_types tenv venv defs =
-    let (res, _) = derecurse_types tenv.defs tenv.aliases venv defs in
+    let (res, _) = derecurse_types tenv venv defs in
     let (aliases, defs) = List.fold_left2
         (fun (tenv, h) (name, params, typ) def ->
             if params = []
@@ -212,10 +225,15 @@ let define_atom tenv name =
             aliases = StrMap.add name (mk_atom name) tenv.aliases ;
             atoms = StrSet.add name tenv.atoms }
 
+let define_abstract tenv name vs =
+    if StrMap.mem name tenv.abs
+    then raise (TypeDefinitionError (Printf.sprintf "Abstract type %s already defined!" name))
+    else { tenv with abs = StrMap.add name (define_abstract name vs) tenv.abs }
+
 let has_atom tenv name = StrSet.mem name tenv.atoms
 
 let get_atom_type tenv name =
-    match has_atom tenv name, get_non_parametric_type tenv.aliases name with
+    match has_atom tenv name, get_non_parametric_type tenv name with
     | true, Some t -> t
     | _ -> raise (TypeDefinitionError (Printf.sprintf "Atom type %s undefined!" name))
 
