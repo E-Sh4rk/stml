@@ -34,10 +34,14 @@ and type_expr =
     | TWhere of type_expr * (string * string list * type_expr) list
 
 type type_def = string * string list * type_expr
-type type_env = typ StrMap.t (* User-defined non-parametric types *) * StrSet.t (* Atoms *) * type_def list (* History of definitions *)
+type type_env = {
+    aliases : typ StrMap.t ; (* User-defined non-parametric types *)
+    atoms : StrSet.t ; (* Atoms *) 
+    defs : type_def list (* History of definitions *)
+}
 type var_type_env = TVar.t StrMap.t (* Var types *)
 
-let empty_tenv = (StrMap.empty, StrSet.empty, [])
+let empty_tenv = { aliases=StrMap.empty ; atoms=StrSet.empty ; defs=[] }
 let empty_vtenv = StrMap.empty
 
 let type_base_to_typ t =
@@ -176,8 +180,8 @@ let derecurse_types history env venv defs =
     let venv = Hashtbl.fold StrMap.add venv StrMap.empty in
     (res, venv)
 
-let type_expr_to_typ (tenv, _, history) venv t =
-    match derecurse_types history tenv venv [ ("", [], t) ] with
+let type_expr_to_typ tenv venv t =
+    match derecurse_types tenv.defs tenv.aliases venv [ ("", [], t) ] with
     | ([ "", [], t ], venv) -> (t, venv)
     | _ -> assert false
 
@@ -189,26 +193,29 @@ let type_exprs_to_typs env venv ts =
     ) ts in
     (ts, !venv)
 
-let define_types (tenv, aenv, h) venv defs =
-    let (res, _) = derecurse_types h tenv venv defs in
-    let (tenv, h) = List.fold_left2
+let define_types tenv venv defs =
+    let (res, _) = derecurse_types tenv.defs tenv.aliases venv defs in
+    let (aliases, defs) = List.fold_left2
         (fun (tenv, h) (name, params, typ) def ->
             if params = []
             then begin
                 register name typ ; (StrMap.add name typ tenv, h)
             end else (tenv, def::h))
-        (tenv, h) res defs
-    in (tenv, aenv, h)
+        (tenv.aliases, tenv.defs) res defs
+    in { tenv with aliases ; defs }
 
-let define_atom (env, atoms, h) name =
-    if StrMap.mem name env
+let define_atom tenv name =
+    if StrMap.mem name tenv.aliases
     then raise (TypeDefinitionError (Printf.sprintf "Atom %s already defined!" name))
-    else (StrMap.add name (mk_atom name) env, StrSet.add name atoms, h)
+    else
+        { tenv with
+            aliases = StrMap.add name (mk_atom name) tenv.aliases ;
+            atoms = StrSet.add name tenv.atoms }
 
-let has_atom (_, atoms, _) name = StrSet.mem name atoms
+let has_atom tenv name = StrSet.mem name tenv.atoms
 
-let get_atom_type ((env, _, _) as e) name =
-    match has_atom e name, get_non_parametric_type env name with
+let get_atom_type tenv name =
+    match has_atom tenv name, get_non_parametric_type tenv.aliases name with
     | true, Some t -> t
     | _ -> raise (TypeDefinitionError (Printf.sprintf "Atom type %s undefined!" name))
 
