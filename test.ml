@@ -1,9 +1,25 @@
 (* ========= ABSTRACT TYPES ======== *)
 
-abstract type ref(-'a)
+abstract type cav(-'a)
+abstract type cov(+'a)
+abstract type inv('a)
+let cav = <cav(empty)>
+let cav = <cav(int) & cav(bool) & ~cav(any)>
+let cav : cav(int|bool) & ~cav(any) = cav
 
-let t = <ref(any)>
-let t = <ref(int) & ref(bool) & ~ref(any)>
+let cov = <cov(any)>
+let cov = <cov(int) & cov(bool)>
+
+let inv = <inv(int) & inv(bool) & inv(int|bool)>
+
+abstract type ref('a)
+let ref = <'a -> ref('a)>
+let set = <ref('a) -> 'a -> ()>
+let get = <ref('a) -> 'a>
+let test_ref = ref 42
+let test_ref x = (* TODO: a sort of value restriction *)
+  let y = ref x in
+  (set y 42, get y)
 
 (* ================================= *)
 let succ = <int->int>
