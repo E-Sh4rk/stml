@@ -6,5 +6,9 @@
     {
         "name": "Recursive Functions",
         "path": "rec.stml"
+    },
+    {
+        "name": "Abstract Types",
+        "path": "abstract.stml"
     }
 ]

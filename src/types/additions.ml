@@ -67,7 +67,10 @@ let get_non_parametric_type tenv name = StrMap.find_opt name tenv.aliases
 let get_abstract_type tenv name tys =
     match StrMap.find_opt name tenv.abs with
     | None -> None
-    | Some abs -> Some (mk_abstract abs tys)
+    | Some abs ->
+        if tys = []
+        then Some (mk_abstract_any abs)
+        else Some (mk_abstract abs tys)
 
 (* TODO: fix conflicts when an atom and an abstract type have the same name... *)
 let derecurse_types tenv venv defs =
@@ -247,8 +250,16 @@ let is_test_type t =
                 if ps <> [] || ns <> [] then raise NotTestType ;
                 let open Sstt.Descr in
                 components d |> List.iter (function
-                    | Atoms _ | Intervals _ | Tuples _ | Records _
-                    | Tags _ -> ()
+                    | Atoms _ | Intervals _ | Tuples _ | Records _ -> ()
+                    | Tags t ->
+                        Tags.destruct t |> snd |> List.iter (fun comp ->
+                            let tag = Sstt.TagComp.tag comp in
+                            let ty = Sstt.Descr.mk_tagcomp comp |> Sstt.Ty.mk_descr in
+                            let any_ty = Sstt.Extensions.Abstracts.mk_any tag in
+                            if Sstt.Extensions.Abstracts.is_abstract tag &&
+                                (is_empty ty || subtype any_ty ty) |> not
+                            then raise NotTestType
+                        )
                     | Arrows a ->
                         let t = mk_arrows a |> Sstt.Ty.mk_descr in
                         if (is_empty t || subtype arrow_any t) |> not

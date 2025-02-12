@@ -35,6 +35,7 @@ type variance = Cov | Cav | Inv
 type abstract
 val define_abstract : string -> variance list -> abstract
 val mk_abstract : abstract -> typ list -> typ
+val mk_abstract_any : abstract -> typ
 
 val mk_tuple : typ list -> typ
 val tuple_any : typ

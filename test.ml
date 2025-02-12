@@ -3,10 +3,13 @@
 abstract type cav(-'a)
 abstract type cov(+'a)
 abstract type inv('a)
+
+let test_neg1 = <cav & ~cav(int)>
+let test_neg2 = < ~cav(int)>
+
 let cav = <cav(empty)>
 let cav = <cav(int) & cav(bool) & ~cav(any)>
 let cav : cav(int|bool) & ~cav(any) = cav
-
 let cov = <cov(any)>
 let cov = <cov(int) & cov(bool)>
 
@@ -14,12 +17,29 @@ let inv = <inv(int) & inv(bool) & inv(int|bool)>
 
 abstract type ref('a)
 let ref = <'a -> ref('a)>
-let set = <ref('a) -> 'a -> ()>
+let set = <ref('a) -> 'a -> ref('a)> (* We dont have value restriction yet, so functions should not have effects *)
 let get = <ref('a) -> 'a>
-let test_ref = ref 42
-let test_ref x = (* TODO: a sort of value restriction *)
+
+let test_ref = ref 42 (* No value restriction yet :( *)
+let test_ref x =
   let y = ref x in
-  (set y 42, get y)
+  let y = set y 42 in
+  get y
+
+let is_ref x = if x is ref then true else false
+let is_not_ref x = if x is ~ref then true else false
+(* let incalid_typecase x = if x is ref(int) then true else false *)
+
+abstract type map(-'k, +'v)
+let mk_map = <() -> map('a, 'b)>
+let add_map = <map('a, 'b) -> 'a -> 'b -> map('a, 'b)>
+let get_map = <map('a, 'b) -> 'a -> 'b>
+
+let test_map x =
+  let map = mk_map () in
+  let map = add_map map x 42 in
+  let map = add_map map "key" 0 in
+  (map, get_map map false)
 
 (* ================================= *)
 let succ = <int->int>

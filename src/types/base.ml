@@ -73,6 +73,7 @@ let define_abstract name vs =
   pparams_abs := printer::!pparams_abs ;
   tag
 let mk_abstract = Sstt.Extensions.Abstracts.mk
+let mk_abstract_any = Sstt.Extensions.Abstracts.mk_any
 
 let true_typ = Sstt.Extensions.Bools.bool true
 let false_typ = Sstt.Extensions.Bools.bool false
