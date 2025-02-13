@@ -57,10 +57,14 @@ let from_label lbl = Sstt.Label.name lbl
 
 (* ----- *)
 
-let mk_atom name = name |> Sstt.Atoms.Atom.mk |> Sstt.Descr.mk_atom |> Sstt.Ty.mk_descr
+type atom = Sstt.Atoms.Atom.t
+let pp_atom = Sstt.Atoms.Atom.pp
+let define_atom name = name |> Sstt.Atoms.Atom.mk
+let mk_atom atom = atom |> Sstt.Descr.mk_atom |> Sstt.Ty.mk_descr
 let atom_any = Sstt.Atoms.any () |> Sstt.Descr.mk_atoms |> Sstt.Ty.mk_descr
 
 type tag = Sstt.TagComp.Tag.t
+let pp_tag = Sstt.TagComp.Tag.pp
 let define_tag name = name |> Sstt.TagComp.Tag.mk
 let mk_tag tag ty = Sstt.Descr.mk_tag (tag, ty) |> Sstt.Ty.mk_descr
 let destruct_tag tag ty =

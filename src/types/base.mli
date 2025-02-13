@@ -27,10 +27,14 @@ val diff : typ -> typ -> typ
 val conj : typ list -> typ
 val disj : typ list -> typ
 
-val mk_atom : string -> typ
+type atom
+val pp_atom : Format.formatter -> atom -> unit
+val define_atom : string -> atom
+val mk_atom : atom -> typ
 val atom_any : typ
 
 type tag
+val pp_tag : Format.formatter -> tag -> unit
 val define_tag : string -> tag
 val mk_tag : tag -> typ -> typ
 val destruct_tag : tag -> typ -> typ

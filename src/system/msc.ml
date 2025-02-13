@@ -8,7 +8,8 @@ type a =
   | Alias of Variable.t
   | Abstract of typ
   | Const of Ast.const
-  | Constructor of string * Variable.t option
+  | Atom of atom
+  | Tag of tag * Variable.t
   | Lambda of (typ list) * Variable.t * e
   | Ite of Variable.t * typ * Variable.t * Variable.t
   | App of Variable.t * Variable.t
@@ -44,7 +45,8 @@ let map ef af =
     | Alias v -> Alias v
     | Abstract t -> Abstract t
     | Const c -> Const c
-    | Constructor (c,v) -> Constructor (c,v)
+    | Atom a -> Atom a
+    | Tag (t,v) -> Tag (t,v)
     | Lambda (ta, v, e) -> Lambda (ta, v, aux_e e)
     | Ite (v, t, x1, x2) -> Ite (v, t, x1, x2)
     | App (v1, v2) -> App (v1, v2)
@@ -71,7 +73,7 @@ let map_a ef af = map ef af |> snd
 let fold ef af =
   let rec aux_a a =
     begin match a with
-    | Alias _ | Abstract _ | Const _ | Constructor _ | App _ | Tuple _
+    | Alias _ | Abstract _ | Const _ | Atom _ | Tag _ | App _ | Tuple _
     | Cons _ | Projection _ | RecordUpdate _ | Ite _ | Let _
     | TypeConstr _ | TypeCoercion _ -> []
     | Lambda (_, _, e) -> [aux_e e]
@@ -98,12 +100,12 @@ let fv_a' a acc =
   match a with
   | Lambda (_, v, _) -> VarSet.remove v acc
   | Alias v | Projection (_, v) | RecordUpdate (v, _, None)
-  | TypeConstr (v, _) | TypeCoercion (v, _) | Constructor (_, Some v) -> VarSet.add v acc
+  | TypeConstr (v, _) | TypeCoercion (v, _) | Tag (_, v) -> VarSet.add v acc
   | Ite (v, _, x1, x2) -> VarSet.add v acc |> VarSet.add x1 |> VarSet.add x2
   | Tuple vs -> VarSet.of_list vs |> VarSet.union acc
   | App (v1, v2) | Cons (v1, v2) | Let (v1, v2) | RecordUpdate (v1, _, Some v2) ->
     VarSet.add v1 acc |> VarSet.add v2
-  | Const _ | Abstract _ | Constructor (_, None) -> acc
+  | Const _ | Abstract _ | Atom _ -> acc
 
 let fv_a x = fold_a fv_e' fv_a' x
 let fv_e x = fold_e fv_e' fv_a' x
@@ -269,7 +271,7 @@ let remove_toplevel e =
       Lambda (ts, v, aux ctx cur_args e)
     | Abstract t -> Abstract t
     | Const c -> Const c
-    | Constructor c -> Constructor c
+    | Atom a -> Atom a
     | Var v -> Var v
     | Ite (e, t, e1, e2) -> Ite (aux' e, t, aux' e1, aux' e2)
     | App (e1, e2) -> App (aux' e1, aux' e2)
@@ -300,7 +302,7 @@ let convert_to_msc ast =
       else match e with
       | Ast.Abstract t -> ([], expr_var_map, Abstract t)
       | Ast.Const c -> ([], expr_var_map, Const c)
-      | Ast.Constructor c -> ([], expr_var_map, Constructor (c,None))
+      | Ast.Atom a -> ([], expr_var_map, Atom a)
       | Ast.Var v when Variable.is_binding_var v -> raise (IsVar v)
       | Ast.Var v -> ([], expr_var_map, Alias v)
       | Ast.Lambda (t, v, e) ->

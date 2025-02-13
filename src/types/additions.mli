@@ -45,6 +45,7 @@ val type_exprs_to_typs : type_env -> var_type_env -> type_expr list -> typ list 
 
 val define_abstract : type_env -> string -> variance list -> type_env
 val define_types : type_env -> var_type_env -> (string * string list * type_expr) list -> type_env
+val get_atom : type_env -> string -> atom
 val get_constructor_type : type_env -> string -> typ option -> typ
 
 (* Operations on types *)

@@ -44,31 +44,31 @@ type ('a, 'typ, 'v) pattern =
 | PatAssign of 'v * const
 [@@deriving ord]
 
-and ('a, 'typ, 'v) ast =
+and ('a, 'typ, 'ato, 'v) ast =
 | Abstract of 'typ
 | Const of const
 | Var of 'v
-| Constructor of string
-| Lambda of ('typ type_annot) * 'v * ('a, 'typ, 'v) t
-| Fixpoint of ('a, 'typ, 'v) t
-| Ite of ('a, 'typ, 'v) t * 'typ * ('a, 'typ, 'v) t * ('a, 'typ, 'v) t
-| App of ('a, 'typ, 'v) t * ('a, 'typ, 'v) t
-| Let of 'v * ('a, 'typ, 'v) t * ('a, 'typ, 'v) t
-| Tuple of ('a, 'typ, 'v) t list
-| Cons of ('a, 'typ, 'v) t * ('a, 'typ, 'v) t
-| Projection of projection * ('a, 'typ, 'v) t
-| RecordUpdate of ('a, 'typ, 'v) t * string * ('a, 'typ, 'v) t option
-| TypeConstr of ('a, 'typ, 'v) t * 'typ list
-| TypeCoercion of ('a, 'typ, 'v) t * 'typ list
-| PatMatch of ('a, 'typ, 'v) t * (('a, 'typ, 'v) pattern * ('a, 'typ, 'v) t) list
-| TopLevel of ('a, 'typ, 'v) t
+| Atom of 'ato
+| Lambda of ('typ type_annot) * 'v * ('a, 'typ, 'ato, 'v) t
+| Fixpoint of ('a, 'typ, 'ato, 'v) t
+| Ite of ('a, 'typ, 'ato, 'v) t * 'typ * ('a, 'typ, 'ato, 'v) t * ('a, 'typ, 'ato, 'v) t
+| App of ('a, 'typ, 'ato, 'v) t * ('a, 'typ, 'ato, 'v) t
+| Let of 'v * ('a, 'typ, 'ato, 'v) t * ('a, 'typ, 'ato, 'v) t
+| Tuple of ('a, 'typ, 'ato, 'v) t list
+| Cons of ('a, 'typ, 'ato, 'v) t * ('a, 'typ, 'ato, 'v) t
+| Projection of projection * ('a, 'typ, 'ato, 'v) t
+| RecordUpdate of ('a, 'typ, 'ato, 'v) t * string * ('a, 'typ, 'ato, 'v) t option
+| TypeConstr of ('a, 'typ, 'ato, 'v) t * 'typ list
+| TypeCoercion of ('a, 'typ, 'ato, 'v) t * 'typ list
+| PatMatch of ('a, 'typ, 'ato, 'v) t * (('a, 'typ, 'v) pattern * ('a, 'typ, 'ato, 'v) t) list
+| TopLevel of ('a, 'typ, 'ato, 'v) t
 [@@deriving ord]
 
-and ('a, 'typ, 'v) t = 'a * ('a, 'typ, 'v) ast
+and ('a, 'typ, 'ato, 'v) t = 'a * ('a, 'typ, 'ato, 'v) ast
 
-type annot_expr = (annotation, typ, Variable.t) t
-type expr = (unit, typ, Variable.t) t
-type parser_expr = (annotation, type_expr, varname) t
+type annot_expr = (annotation, typ, atom, Variable.t) t
+type expr = (unit, typ, atom, Variable.t) t
+type parser_expr = (annotation, type_expr, string, varname) t
 
 module Expr = struct
     type el = expr
@@ -77,6 +77,7 @@ module Expr = struct
         let cstruct = compare
             (fun () () -> 0)
             (fun _ _ -> 0)
+            Stdlib.compare
             Variable.compare t1 t2
         in match cstruct with
         | -1 -> Lower
@@ -86,6 +87,7 @@ module Expr = struct
                 let cexact = compare
                     (fun () () -> 0)
                     Types.Compare.compare_typ
+                    Stdlib.compare
                     Variable.compare t1 t2 in
                 match cexact with
                 | -1 -> Lower
@@ -135,7 +137,7 @@ let parser_expr_to_annot_expr tenv vtenv name_var_map e =
             if StrMap.mem str env
             then Var (StrMap.find str env)
             else raise (SymbolError ("undefined symbol "^str))
-        | Constructor str -> Constructor str
+        | Atom str -> Atom (get_atom tenv str)
         | Lambda (t,str,e) ->
             let (t, vtenv) = match t with
             | Unnanoted -> (Unnanoted, vtenv)
@@ -275,7 +277,7 @@ let rec unannot (_,e) =
     | Abstract t -> Abstract t
     | Const c -> Const c
     | Var v -> Var v
-    | Constructor v -> Constructor v
+    | Atom a -> Atom a
     | Lambda (t, v, e) -> Lambda (t, v, unannot e)
     | Fixpoint e -> Fixpoint (unannot e)
     | Ite (e, t, e1, e2) -> Ite (unannot e, t, unannot e1, unannot e2)
@@ -325,7 +327,7 @@ let normalize_bvs e =
         | Const c -> Const c
         | Var v when VarMap.mem v map -> Var (VarMap.find v map)
         | Var v -> Var v
-        | Constructor v -> Constructor v
+        | Atom a -> Atom a
         | Lambda (t, v, e) ->
             let v' = get_predefined_var depth in
             let map = VarMap.add v v' map in
@@ -393,7 +395,7 @@ let map_ast f e =
         | Abstract t -> Abstract t
         | Const c -> Const c
         | Var v -> Var v
-        | Constructor v -> Constructor v
+        | Atom a -> Atom a
         | Lambda (annot, v, e) -> Lambda (annot, v, aux e)
         | Fixpoint e -> Fixpoint (aux e)
         | Ite (e, t, e1, e2) -> Ite (aux e, t, aux e1, aux e2)

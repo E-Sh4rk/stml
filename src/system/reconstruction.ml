@@ -21,7 +21,7 @@ let rec is_undesirable s =
   dnf s |> List.for_all
     (List.exists (fun (a, b) -> non_empty a && is_undesirable b))
 
-let refine_a tenv env a t =
+let refine_a env a t =
   log ~level:5 "refine_a@." ;
   match a with
   | Lambda _ -> []
@@ -29,9 +29,9 @@ let refine_a tenv env a t =
   | TypeCoercion (_, t') when subtype (conj t') t -> [Env.empty]
   | Const c when subtype (Parsing.Ast.const_to_typ c) t -> [Env.empty]
   | Alias v when subtype (Env.find v env) t -> [Env.empty]
-  | Constructor (c,None) when subtype (get_constructor_type tenv c None) t -> [Env.empty]
-  | Alias _ | Abstract _ | TypeCoercion _ | Const _ | Constructor (_, None) -> []
-  | Constructor (_, Some _) -> failwith "TODO"
+  | Atom a when subtype (mk_atom a) t -> [Env.empty]
+  | Alias _ | Abstract _ | TypeCoercion _ | Const _ | Atom _ -> []
+  | Tag _ -> failwith "TODO"
   | Tuple vs ->
     tuple_dnf (List.length vs) t
     |> List.filter (fun b -> subtype (tuple_branch_type b) t)
@@ -306,14 +306,14 @@ let rec infer_mono_a vardef tenv expl env pannot_a a =
     | _, UntypA -> log ~level:3 "Untyp annot generated a fail.@." ; Fail
     | Alias v, InferA when memvar v -> Ok (TypA)
     | Alias v, InferA -> log ~level:3 "Unknown var %s generated a fail.@." (Variable.show v) ; Fail
-    | Abstract _, InferA | Const _, InferA | Constructor (_, None), InferA -> Ok (TypA)
+    | Abstract _, InferA | Const _, InferA | Atom _, InferA -> Ok (TypA)
     | Let (v1, v2), InferA ->
       if memvar v1 |> not
       then needvar v1 InferA UntypA
       else if memvar v2 |> not
       then needvar v2 InferA UntypA
       else Ok TypA
-    | Constructor (_, Some v), InferA ->
+    | Tag (_, v), InferA ->
       if memvar v then Ok TypA else needvar v InferA UntypA
     | Tuple vs, InferA ->
       begin match vs |> List.find_opt (fun v -> memvar v |> not) with
@@ -531,8 +531,8 @@ and infer_mono tenv expl env pannot e =
           | Split (env', pannot1, pannot2) when Env.mem v env' ->
             let s' = Env.find v env' in
             let t1, t2 = cap s s', diff s s' in
-            let gammas1 = refine_a tenv env a (neg t1) in
-            let gammas2 = refine_a tenv env a (neg t2) in
+            let gammas1 = refine_a env a (neg t1) in
+            let gammas2 = refine_a env a (neg t2) in
             let res1 =
               Propagate (pannot_a,gammas1@gammas2,((t1,pannot1)::(t2,pannot2)::ex,d,u))
             in

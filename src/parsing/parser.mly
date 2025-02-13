@@ -224,7 +224,7 @@ prefix_term:
 
 atomic_term:
   x=generalized_identifier { annot $startpos $endpos (Var x) }
-| c=CID { annot $startpos $endpos (Constructor c) }
+| c=CID { annot $startpos $endpos (Atom c) }
 | l=literal { annot $startpos $endpos (Const l) }
 | MAGIC { annot $startpos $endpos (Abstract (TBase TEmpty)) }
 | LPAREN RPAREN { annot $startpos $endpos (Const Unit) }

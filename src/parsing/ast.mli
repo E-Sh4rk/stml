@@ -37,30 +37,30 @@ type ('a, 'typ, 'v) pattern =
 | PatRecord of (string * (('a, 'typ, 'v) pattern)) list * bool
 | PatAssign of 'v * const
 
-and ('a, 'typ, 'v) ast =
+and ('a, 'typ, 'ato, 'v) ast =
 | Abstract of 'typ
 | Const of const
 | Var of 'v
-| Constructor of string (* TODO: constructor type *)
-| Lambda of ('typ type_annot) * 'v * ('a, 'typ, 'v) t
-| Fixpoint of ('a, 'typ, 'v) t
-| Ite of ('a, 'typ, 'v) t * 'typ * ('a, 'typ, 'v) t * ('a, 'typ, 'v) t
-| App of ('a, 'typ, 'v) t * ('a, 'typ, 'v) t
-| Let of 'v * ('a, 'typ, 'v) t * ('a, 'typ, 'v) t
-| Tuple of ('a, 'typ, 'v) t list
-| Cons of ('a, 'typ, 'v) t * ('a, 'typ, 'v) t
-| Projection of projection * ('a, 'typ, 'v) t
-| RecordUpdate of ('a, 'typ, 'v) t * string * ('a, 'typ, 'v) t option
-| TypeConstr of ('a, 'typ, 'v) t * 'typ list
-| TypeCoercion of ('a, 'typ, 'v) t * 'typ list
-| PatMatch of ('a, 'typ, 'v) t * (('a, 'typ, 'v) pattern * ('a, 'typ, 'v) t) list
-| TopLevel of ('a, 'typ, 'v) t
+| Atom of 'ato
+| Lambda of ('typ type_annot) * 'v * ('a, 'typ, 'ato, 'v) t
+| Fixpoint of ('a, 'typ, 'ato, 'v) t
+| Ite of ('a, 'typ, 'ato, 'v) t * 'typ * ('a, 'typ, 'ato, 'v) t * ('a, 'typ, 'ato, 'v) t
+| App of ('a, 'typ, 'ato, 'v) t * ('a, 'typ, 'ato, 'v) t
+| Let of 'v * ('a, 'typ, 'ato, 'v) t * ('a, 'typ, 'ato, 'v) t
+| Tuple of ('a, 'typ, 'ato, 'v) t list
+| Cons of ('a, 'typ, 'ato, 'v) t * ('a, 'typ, 'ato, 'v) t
+| Projection of projection * ('a, 'typ, 'ato, 'v) t
+| RecordUpdate of ('a, 'typ, 'ato, 'v) t * string * ('a, 'typ, 'ato, 'v) t option
+| TypeConstr of ('a, 'typ, 'ato, 'v) t * 'typ list
+| TypeCoercion of ('a, 'typ, 'ato, 'v) t * 'typ list
+| PatMatch of ('a, 'typ, 'ato, 'v) t * (('a, 'typ, 'v) pattern * ('a, 'typ, 'ato, 'v) t) list
+| TopLevel of ('a, 'typ, 'ato, 'v) t
 
-and ('a, 'typ, 'v) t = 'a * ('a, 'typ, 'v) ast
+and ('a, 'typ, 'ato, 'v) t = 'a * ('a, 'typ, 'ato, 'v) ast
 
-type annot_expr = (annotation, typ, Variable.t) t
-type expr = (unit, typ, Variable.t) t
-type parser_expr = (annotation, type_expr, varname) t
+type annot_expr = (annotation, typ, atom, Variable.t) t
+type expr = (unit, typ, atom, Variable.t) t
+type parser_expr = (annotation, type_expr, string, varname) t
 
 module Expr : Pomap_intf.PARTIAL_ORDER with type el = expr
 module ExprMap : Pomap_intf.POMAP with type key = expr
@@ -69,8 +69,8 @@ type name_var_map = Variable.t StrMap.t
 val empty_name_var_map : name_var_map
 
 val unique_exprid : unit -> exprid
-val identifier_of_expr : (annotation, 'a, 'b) t -> exprid
-val position_of_expr : (annotation, 'a, 'b) t -> Position.t
+val identifier_of_expr : (annotation, 'a, 'b, 'c) t -> exprid
+val position_of_expr : (annotation, 'a, 'b, 'c) t -> Position.t
 
 val new_annot : Position.t -> annotation
 val copy_annot : annotation -> annotation

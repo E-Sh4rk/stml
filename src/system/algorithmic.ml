@@ -83,9 +83,8 @@ let rec typeof_a vardef tenv env (annot_a,c_a) a =
       typeof_inter (fun annot_a -> typeof_a vardef tenv env annot_a a) pos branches
     | Alias v, AliasA -> var_type v
     | Const c, ConstA -> Parsing.Ast.const_to_typ c
-    | Constructor (c,v), ConstructorA ->
-      let v = Option.map var_type v in
-      get_constructor_type tenv c v
+    | Atom a, AtomA -> mk_atom a
+    | Tag (tag,v), TagA -> mk_tag tag (var_type v)
     | Abstract t, AbstractA -> t
     | Tuple vs, TupleA rs ->
       let ts = List.map2 (fun v r -> var_type v |> rename_check r) vs rs in
