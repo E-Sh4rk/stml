@@ -12,12 +12,12 @@ let fact fact n =
 let fact = fixpoint fact
 
 let length length lst =
-  if lst is nil then 0 else succ (length (tl lst))
+  if lst is [] then 0 else succ (length (tl lst))
 
 let length = fixpoint length
 
 let map map f lst =
-  if lst is nil then nil
+  if lst is [] then []
   else (f (hd lst))::(map f (tl lst))
 
 let map = fixpoint map

@@ -60,7 +60,7 @@ let switch2 s f a b =
   if s then f a else f b
 
 let typeof x =
-  if x is unit|nil then "nil"
+  if x is ()|[] then "[]"
   else if x is string then "string"
   else if x is char then "char"
   else if x is int then "Number"
@@ -95,12 +95,12 @@ let fact fact n =
 let fact = fixpoint fact
 
 let length length lst =
-  if lst is nil then 0 else succ (length (tl lst))
+  if lst is [] then 0 else succ (length (tl lst))
 
 let length = fixpoint length
 
 let map map f lst =
-  if lst is nil then nil
+  if lst is [] then []
   else (f (hd lst))::(map f (tl lst))
 
 let map = fixpoint map
@@ -128,8 +128,6 @@ let map = fixpoint map
 *)
 
 (* prelude *)
-
-atoms no
 
 let and_ = fun x -> fun y ->
      if x is true then if y is true then y else false else false
@@ -243,10 +241,10 @@ let implict10 = fun p ->
 
 
 let example11 = fun (p : (any, any)) ->
-  if and_ (is_int (fst p)) (is_int (snd p)) is true then g p else no
+  if and_ (is_int (fst p)) (is_int (snd p)) is true then g p else ()
 
 let implict11 = fun p ->
-  if and_ (is_int (fst p)) (is_int (snd p)) is true then g p else no
+  if and_ (is_int (fst p)) (is_int (snd p)) is true then g p else ()
 
 
 let example12 = fun (p : (any, any)) ->
@@ -362,24 +360,24 @@ let rec filtermap ((f, l) : ('a -> bool | (true, 'b), ['a*])) =
  *                             *
  *******************************)
 
-type Falsy = false | "" | 0
-type Truthy = ~Falsy
+type falsy = false | "" | 0
+type truthy = ~falsy
 
 let and_js = fun x -> fun y ->
-  if x is Falsy then x else y
+  if x is falsy then x else y
 
-let not_js = fun x -> if x is Falsy then 1 else 0
+let not_js = fun x -> if x is falsy then 1 else 0
 
 let or_js = fun x -> fun y ->
-  if x is Truthy then x else y
+  if x is truthy then x else y
 
 let identity_js = fun x -> or_js x x
 
 let and_pair = fun x -> fun y ->
-  if x is Falsy then x else (y, succ x)
+  if x is falsy then x else (y, succ x)
 
 let test = fun x ->
-  if fst x is Falsy then (fst x) + (snd x) else succ (fst x)
+  if fst x is falsy then (fst x) + (snd x) else succ (fst x)
 
 let rec concat (x:['a*]) (y:['b*]) =
    if x is [] then y else (hd x)::(concat (tl x) y)
@@ -396,12 +394,12 @@ let reverse = fixpoint reverse_stub
 
 (*
 let rev_tl_stub rev_tl l acc  =
-     if l is nil then acc else rev_tl (snd l) (fst l, acc)
+     if l is [] then acc else rev_tl (snd l) (fst l, acc)
 
-let rev_tl l = (fixpoint rev_tl_stub) l nil
+let rev_tl l = (fixpoint rev_tl_stub) l []
 
 let foldr_stub foldr f l acc =
-   if l is nil then acc else f (fst l) (foldr f (snd l) acc)
+   if l is [] then acc else f (fst l) (foldr f (snd l) acc)
 
 let foldr = fixpoint foldr_stub
 
@@ -410,7 +408,7 @@ let foldr_ann : ('a -> 'b -> 'b ) -> [ 'a* ] -> 'b -> 'b = foldr
 (* MANY VARIANTS OF FILTER *)
 
 let filter_stub filter (f: ('a->true) & ('b -> ~true)) (l:[('a|'b)*]) =
-   if l is nil then nil else
+   if l is [] then [] else
    if l is [any+] then
        if f(fst(l)) is true then (fst(l),filter f (snd(l))) else filter f (snd(l))
    else 42(3)
@@ -422,7 +420,7 @@ let filter2_stub
   (f : (('a & 'b) -> any) & (('a\'b) -> ~true))
   (l : [ ('a)*  ] )  =
   (* filter f l = *)
-  if l is nil then nil
+  if l is [] then []
   else
     if f(fst(l)) is true then (fst(l),filter f (snd(l))) else filter f (snd(l))
 
@@ -442,7 +440,7 @@ let filter3_stub
   (filter : ((('a & 'b) -> true) & (('a\'b) -> ~true)) -> [ 'a* ] -> [ ('a&'b)* ] )
   (f : (('a & 'b) -> true) & (('a\'b) -> ~true))
   (l : [ ('a)*  ] )  =
-   if l is nil then nil else
+   if l is [] then [] else
        let h = fst(l) in
        let t = snd(l) in
        if f h is true then (h ,filter f t) else filter f t
@@ -454,7 +452,7 @@ let filter4_stub
   (filter : ((('a) -> true) & (('b) -> ~true)) -> [ ('a|'b)* ] -> [ ('a)* ] )
   (f : (('a) -> true) & (('b) -> ~true))
   (l : [ ('a|'b)* ] )  =
-   if l is nil then nil else
+   if l is [] then [] else
        let h = fst(l) in
        let t = snd(l) in
        if f h is true then (h ,filter f t) else filter f t
@@ -466,7 +464,7 @@ let xi = <(int -> true) & (bool -> false)>
 
 let filter3_test = filter3 xi [1;3;true;42]
 
-let filter4_test = filter4 xi (1, (3, (true,(42,nil))))
+let filter4_test = filter4 xi (1, (3, (true,(42,[]))))
 
 (* cross typing on the two versions *)
 
@@ -479,7 +477,7 @@ let filter3_as_4 : ((('a) -> true) & (('b) -> ~true)) -> [ ('a|'b)* ] -> [ ('a)*
 let filter_classic_stub
   (filter : (('a) -> bool) -> [ ('a)* ] -> [ ('a)* ] ) ( f : 'a -> bool) (l : [ ('a)* ] ) =
   (* filter f l = *)
-  if l is nil then nil
+  if l is [] then []
   else
     if f(fst(l)) is true then (fst(l),filter f (snd(l))) else filter f (snd(l))
 
@@ -490,7 +488,7 @@ let filter_classic = fixpoint filter_classic_stub
 let filter_total_stub
   (filter : (('a -> true) & ((~('a)) -> ~true)) -> [ any* ] -> [ ('a)* ] )
   ( f : (('a -> true) & ((~('a)) -> ~true))) (l : [ any* ] )  =
-   if l is nil then nil else
+   if l is [] then [] else
    if f(fst(l)) is true then (fst(l),filter f (snd(l))) else filter f (snd(l))
 
 let filter_total : (('a -> true) & ((~'a) -> ~true)) -> [any*] -> [ ('a)* ] = fixpoint filter_total_stub
@@ -498,24 +496,24 @@ let filter_total : (('a -> true) & ((~'a) -> ~true)) -> [any*] -> [ ('a)* ] = fi
 (* DEEP FLATTEN FUNCTION *)
 
 let flatten_noannot_stub flatten x =
-  if x is nil then nil else
+  if x is [] then [] else
   if x is [any*] then concat (flatten (fst x)) (flatten (snd x))
-  else (x,nil)
+  else (x,[])
 
 (* let flatten_noannot = fixpoint flatten_noannot_stub *)
 
 type Tree 'a = ('a \ [any*]) | [(Tree 'a)*]
 
 let flatten_stub flatten (x : Tree 'a) =
-  if x is nil then nil else
+  if x is [] then [] else
   if x is [any*] then concat (flatten (fst x)) (flatten (snd x))
-  else (x,nil)
+  else (x,[])
 
 let flatten = fixpoint flatten_stub
 
 let flatten_ann : (Tree 'a -> ['a*]) = flatten 
 
-let test_flatten = flatten ((1,(true,nil)),(((42,(false,nil)),0),"ok"))
+let test_flatten = flatten ((1,(true,[])),(((42,(false,[])),0),"ok"))
 
 (* MISCELLANEOUS *)
 
@@ -553,7 +551,7 @@ let test3_patterns_ann x y =
 
 let typeof_patterns x =
   match x with
-  | :unit | :nil -> "nil"
+  | :() | :[] -> "[]"
   | :string -> "string"
   | :char -> "char"
   | :int -> "Number"
@@ -606,7 +604,7 @@ let rec map f (lst:['a*]) =
   end
 
 (* let rec filter_noannot f l =
-  if l is nil then nil
+  if l is [] then []
   else
     if f(fst(l)) is true
     then (fst(l),filter f (snd(l)))
@@ -614,7 +612,7 @@ let rec map f (lst:['a*]) =
 
 let rec filter (f: ('a->any) & ('b -> ~true)) (l:[('a|'b)*]) =
   match l with
-  | :nil -> nil
+  | :[] -> []
   | (e,l) ->
     if f e is true
     then (e, filter f l)
@@ -622,18 +620,18 @@ let rec filter (f: ('a->any) & ('b -> ~true)) (l:[('a|'b)*]) =
   end
     
 (* let rec flatten_noannot x =
-  if x is nil then nil else
+  if x is [] then [] else
   if x is [any*] then concat (flatten (fst x)) (flatten (snd x))
-  else (x,nil) *)
+  else (x,[]) *)
 
 let rec flatten (x : Tree('a)) =    
-  if x is nil then nil else
+  if x is [] then [] else
   if x is [any*] then concat (flatten (fst x)) (flatten (snd x))
-  else (x,nil)
+  else (x,[])
 
 let rec mapi_aux i f l =
   match l with
-  :nil -> []
+  :[] -> []
   | (x, ll) -> let r = f i x in (r, mapi_aux (i+1) f ll)
 end
 
@@ -658,7 +656,7 @@ let rec eval_ann (e:Expr) =
 (* ===== EXAMPLES FROM THE PAPER ===== *)
 
 let toBoolean x =
-    if x is Truthy then true else false
+    if x is truthy then true else false
 
 let lOr (x,y) =
     if toBoolean x then x else y
@@ -672,13 +670,13 @@ let fixpoint = fun f ->
   in delta delta
 
 let map_stub map f lst =
-  if lst is nil then nil
+  if lst is [] then []
   else (f (fst lst), map f (snd lst))
 
 let map = fixpoint map_stub
 
 let filter_stub filter (f: ('a->any) & ('b -> ~true)) (l:[('a|'b)*]) =
-  if l is nil then nil
+  if l is [] then []
   else if f(fst(l)) is true
   then (fst(l), filter f (snd(l)))
   else filter f (snd(l))
@@ -707,7 +705,7 @@ let rec filter f (l:['a*]) =
 
 let rec fold_right f acc l =
   match l with
-  :nil -> acc
+  :[] -> acc
   | (x, ll) -> f x (fold_right f acc ll)
 end
 
@@ -732,7 +730,7 @@ let test_expansion2 =
   (f :> ((int -> int) -> (int -> int)) ;
         ((bool -> bool) -> (bool -> bool))) x
 
-let bool = <unit -> bool>
+let bool = <() -> bool>
 let neg = <(true -> false) & (false -> true)>
 let lor = <(true -> bool -> true)
   & (bool -> true -> true) & (false -> false -> false)>
@@ -756,9 +754,9 @@ let cons2 x y z = x::y::z
 
 let test_cons = hd2 (cons2 'a' 'b' ['c';'d'])
 
-let rec first_leaf (x : T | unit where T = [T+] | int) =
+let rec first_leaf (x : T | () where T = [T+] | int) =
   match x with
-  | () -> nil
+  | () -> []
   | b::_ -> first_leaf b
   | i -> i
   end

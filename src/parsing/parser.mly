@@ -100,16 +100,15 @@
 %token ARROW AND OR NEG DIFF
 %token TIMES PLUS MINUS DIV
 %token LBRACE RBRACE DOUBLEPOINT MATCH WITH END POINT LT GT
-%token ATOMS TYPE TYPE_AND WHERE ABSTRACT
+%token TYPE TYPE_AND WHERE ABSTRACT
 %token LBRACKET RBRACKET SEMICOLON
-%token<string> ID
+%token<string> ID CID PCID
 %token<string> TVAR TVAR_WEAK
 %token<float> LFLOAT
 %token<Z.t> LINT
 %token<bool> LBOOL
 %token<char> LCHAR
 %token<string> LSTRING
-%token LUNIT LNIL
 %token MAGIC
 %token<string> INFIX PREFIX
 
@@ -145,7 +144,6 @@ element:
     let t = multi_param_rec_abstraction $startpos $endpos id ais oty t in
     annot $symbolstartpos $endpos (Definition (i, (id, t, ty)))
   }
-| ATOMS a=ID* { annot $symbolstartpos $endpos (Atoms a) }
 | TYPE ts=separated_nonempty_list(TYPE_AND, param_type_def) { annot $symbolstartpos $endpos (Types ts) }
 | ABSTRACT TYPE name=ID params=abs_params { annot $symbolstartpos $endpos (AbsType (name, params)) }
 
@@ -226,6 +224,7 @@ prefix_term:
 
 atomic_term:
   x=generalized_identifier { annot $startpos $endpos (Var x) }
+| c=CID { annot $startpos $endpos (Constructor c) }
 | l=literal { annot $startpos $endpos (Const l) }
 | MAGIC { annot $startpos $endpos (Abstract (TBase TEmpty)) }
 | LPAREN RPAREN { annot $startpos $endpos (Const Unit) }
@@ -250,8 +249,6 @@ literal:
 | c=LCHAR  { Char c }
 | b=LBOOL  { Bool b }
 | s=LSTRING{ String s }
-| LUNIT    { Unit }
-| LNIL     { Nil }
 
 lfloat:
   f=LFLOAT { f }
@@ -318,6 +315,7 @@ simple_typ:
 atomic_typ:
   x=type_constant { TBase x }
 | s=ID { builtin_type_or_custom s }
+| s=CID { TConstructor s }
 | s=TVAR { TVar s }
 | s=TVAR_WEAK { TVarWeak s }
 | LPAREN RPAREN { TBase TUnit }
@@ -340,8 +338,6 @@ atomic_typ:
 | LPAREN c1=LCHAR MINUS c2=LCHAR RPAREN { TCharInt (c1,c2) }
 | b=LBOOL { if b then TTrue else TFalse }
 | str=LSTRING { TSString str }
-| LNIL { TNil }
-| LUNIT { TUnit }
 
 tint:
   i=LINT { i }

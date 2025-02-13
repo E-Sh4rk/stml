@@ -86,7 +86,6 @@
     <var>prog</var> ::= <var>stmt</var>*
 
     <var>stmt</var> ::=  <kbd>type</kbd> <var>id</var> <var>tvar</var>* <kbd>=</kbd> <var>t</var> [<kbd>and</kbd> ...]
-           | <kbd>atoms</kbd> <var>id</var>+
            | <kbd>let</kbd> <var>gid</var> <kbd>:</kbd> <var>t</var> <kbd>=</kbd> <var>e</var>
            | <kbd>let</kbd> [<kbd>rec</kbd>] <var>gid</var> <var>param</var>* <kbd>=</kbd> <var>e</var>
            | <kbd>let</kbd> [<kbd>rec</kbd>] <kbd>(</kbd><var>gid</var> <kbd>:</kbd> <var>t</var></var><kbd>)</kbd> <var>param</var>* <kbd>=</kbd> <var>e</var>
@@ -102,10 +101,6 @@
                 a type definition, composed of a type name, a (possibly empty) list of type variables, and a type
                 expression.
                 Several mutually recursive type definitions can be defined together using the <kbd>and</kbd> keyword.
-            </li>
-            <li>
-                atoms definitions, introduced by the <kbd>atoms</kbd> keyword and followed by a sequence of identifier.
-                Each identifier defines a constant of that name, and a corresponding singleton type.
             </li>
             <li>a toplevel value definition which follows, roughly, OCaml's
                 syntactic convention. Function parameters can be either simple
@@ -200,7 +195,7 @@
             <li>integer, character (delimited with single quotes), string
             (delimited with double quotes) or floating point literals</li>
             <li>predefined atoms such as <tt><kbd>false</kbd></tt>,
-            <tt><kbd>nil</kbd></tt>, …</li>
+            <tt><kbd>true</kbd></tt>, …</li>
             <li>identifiers</li>
             <li>a <tt><kbd>magic</kbd></tt> constant with type <tt>'a</tt>,
             which can be used to define a variable of any type (without having

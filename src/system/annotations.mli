@@ -25,7 +25,7 @@ module FullAnnot : sig
     type renaming = Subst.t
     type union = (typ * t_cached) list
     and a =
-        | ConstA | AliasA | LetA | AbstractA
+        | ConstA | AliasA | LetA | AbstractA | ConstructorA
         | LambdaA of typ * t_cached
         | TupleA of renaming list
         | ConsA of renaming * inst

@@ -21,7 +21,9 @@ let newline = ('\010' | '\013' | "\013\010")
 
 let blank   = [' ' '\009' '\012']
 
-let id = ['a'-'z''A'-'Z''_']['a'-'z''A'-'Z''0'-'9''_''\'']*
+let id = ['a'-'z''_']['a'-'z''A'-'Z''0'-'9''_''\'']*
+let constr_id = ['A'-'Z']['a'-'z''A'-'Z''0'-'9''_''\'']*
+let param_constr_id = ['A'-'Z']['a'-'z''A'-'Z''0'-'9''_''\'']*'('
 
 let decimal = ['0'-'9']+ ('_'+ ['0'-'9']+)*
 
@@ -45,7 +47,6 @@ let infix_op = ('=' | '<' | '>' | '@' | '^' | '|' | '&' |
 rule token = parse
 | newline { enter_newline lexbuf |> token }
 | blank   { token lexbuf }
-| "atoms" { ATOMS }
 | "type"  { TYPE }
 | "where" { WHERE }
 | "and"   { TYPE_AND }
@@ -101,14 +102,14 @@ rule token = parse
 | float as f { LFLOAT (float_of_string f) }
 | "true"  { LBOOL true }
 | "false" { LBOOL false }
-| "nil"   { LNIL }
-| "unit"  { LUNIT }
 | infix_op as s  { INFIX s }
 | prefix_op as s { PREFIX s }
 | '"' { read_string (Buffer.create 17) lexbuf }
 | '\'' ([^ '\'' '\\' '\010' '\013'] as c) '\'' { LCHAR c }
 | '\'' '\\' (backslash_escapes as c) '\'' { LCHAR (char_for_backslash c) }
 | id as s { ID s }
+| constr_id as s { CID s }
+| param_constr_id as s { PCID (String.sub s 0 ((String.length s) - 1)) }
 | type_var as s { TVAR s }
 | weak_type_var as s { TVAR_WEAK s }
 | eof     { EOF }

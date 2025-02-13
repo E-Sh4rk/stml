@@ -20,12 +20,13 @@ type const =
 | Float of float
 | Char of char
 | String of string
-| Atom of string
 
 type projection = Pi of int * int | Field of string | Hd | Tl
 
 type 'typ type_annot = Unnanoted | ADomain of 'typ list
 
+(* TODO: support parametrized constructors (tags) *)
+(* TODO: add constructors to patterns *)
 type ('a, 'typ, 'v) pattern =
 | PatType of 'typ
 | PatVar of 'v
@@ -40,6 +41,7 @@ and ('a, 'typ, 'v) ast =
 | Abstract of 'typ
 | Const of const
 | Var of 'v
+| Constructor of string (* TODO: constructor type *)
 | Lambda of ('typ type_annot) * 'v * ('a, 'typ, 'v) t
 | Fixpoint of ('a, 'typ, 'v) t
 | Ite of ('a, 'typ, 'v) t * 'typ * ('a, 'typ, 'v) t * ('a, 'typ, 'v) t
@@ -87,7 +89,6 @@ val const_to_typ : const -> typ
 
 type parser_element =
 | Definition of (int (* log level *) * (string * parser_expr * type_expr option))
-| Atoms of string list
 | Types of (string * string list * type_expr) list
 | AbsType of string * variance list
 

@@ -7,6 +7,7 @@ type a =
   | Alias of Variable.t
   | Abstract of typ
   | Const of Ast.const
+  | Constructor of string * Variable.t option
   | Lambda of (typ list) * Variable.t * e
   | Ite of Variable.t * typ * Variable.t * Variable.t
   | App of Variable.t * Variable.t

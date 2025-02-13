@@ -10,8 +10,6 @@ val proj : Parsing.Ast.projection -> typ -> typ
 
 exception Untypeable of Position.t list * string
 
-val typeof_const_atom : type_env -> Parsing.Ast.const -> typ
-
 (** The functions below will raise [Untypeable] if the annotation
     is not valid for the expression. *)
 

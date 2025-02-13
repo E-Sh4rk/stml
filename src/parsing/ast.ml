@@ -25,7 +25,6 @@ type const =
 | Float of float
 | Char of char
 | String of string
-| Atom of string
 [@@deriving show, ord]
 
 type projection = Pi of int * int | Field of string | Hd | Tl
@@ -49,6 +48,7 @@ and ('a, 'typ, 'v) ast =
 | Abstract of 'typ
 | Const of const
 | Var of 'v
+| Constructor of string
 | Lambda of ('typ type_annot) * 'v * ('a, 'typ, 'v) t
 | Fixpoint of ('a, 'typ, 'v) t
 | Ite of ('a, 'typ, 'v) t * 'typ * ('a, 'typ, 'v) t * ('a, 'typ, 'v) t
@@ -134,9 +134,8 @@ let parser_expr_to_annot_expr tenv vtenv name_var_map e =
         | Var str ->
             if StrMap.mem str env
             then Var (StrMap.find str env)
-            else if has_atom tenv str
-            then Const (Atom str)
             else raise (SymbolError ("undefined symbol "^str))
+        | Constructor str -> Constructor str
         | Lambda (t,str,e) ->
             let (t, vtenv) = match t with
             | Unnanoted -> (Unnanoted, vtenv)
@@ -276,6 +275,7 @@ let rec unannot (_,e) =
     | Abstract t -> Abstract t
     | Const c -> Const c
     | Var v -> Var v
+    | Constructor v -> Constructor v
     | Lambda (t, v, e) -> Lambda (t, v, unannot e)
     | Fixpoint e -> Fixpoint (unannot e)
     | Ite (e, t, e1, e2) -> Ite (unannot e, t, unannot e1, unannot e2)
@@ -325,6 +325,7 @@ let normalize_bvs e =
         | Const c -> Const c
         | Var v when VarMap.mem v map -> Var (VarMap.find v map)
         | Var v -> Var v
+        | Constructor v -> Constructor v
         | Lambda (t, v, e) ->
             let v' = get_predefined_var depth in
             let map = VarMap.add v v' map in
@@ -392,6 +393,7 @@ let map_ast f e =
         | Abstract t -> Abstract t
         | Const c -> Const c
         | Var v -> Var v
+        | Constructor v -> Constructor v
         | Lambda (annot, v, e) -> Lambda (annot, v, aux e)
         | Fixpoint e -> Fixpoint (aux e)
         | Ite (e, t, e1, e2) -> Ite (aux e, t, aux e1, aux e2)
@@ -445,11 +447,9 @@ let const_to_typ c =
     | Float _ -> float_typ
     | Char c -> char_interval c c
     | String str -> single_string str
-    | Atom t -> raise (SymbolError ("undefined atom "^t))
 
 type parser_element =
 | Definition of (int (* log level *) * (string * parser_expr * type_expr option))
-| Atoms of string list
 | Types of (string * string list * type_expr) list
 | AbsType of string * variance list
 

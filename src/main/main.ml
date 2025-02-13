@@ -107,9 +107,6 @@ let parse_and_resolve f varm =
         Variable.attach_location var (Position.position annot) ;
         let varm = StrMap.add name var varm in
         (tenv,varm,(log,(var,expr,tyo))::defs)
-      | Ast.Atoms lst ->
-        let tenv = List.fold_left define_atom tenv lst in
-        (tenv,varm,defs)
       | Ast.Types lst ->
         let tenv = define_types tenv empty_vtenv lst in
         (tenv,varm,defs)

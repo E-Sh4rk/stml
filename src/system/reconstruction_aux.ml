@@ -105,6 +105,7 @@ let rec infer_poly_a vardef tenv env pannot_a a =
     | Const _, TypA -> ConstA
     | Let _, TypA -> LetA
     | Abstract _, TypA -> AbstractA
+    | Constructor _, TypA -> ConstructorA
     | Tuple vs, TypA ->
       let rs = vs |> List.map (fun v -> refresh (vartype v |> vars_poly)) in
       TupleA rs

@@ -53,7 +53,7 @@ module FullAnnot = struct
   type union = (typ * t_cached) list
   [@@deriving show]
   and a =
-      | ConstA | AliasA | LetA | AbstractA
+      | ConstA | AliasA | LetA | AbstractA | ConstructorA
       | LambdaA of typ * t_cached
       | TupleA of renaming list
       | ConsA of renaming * inst
@@ -90,7 +90,8 @@ module FullAnnot = struct
 
   and clear_cache_a (a, _) =
   let a = match a with
-  | ConstA | AliasA | LetA | AbstractA | TupleA _ | ConsA _ | AppA _ | ProjA _
+  | ConstA | AliasA | LetA | AbstractA  | ConstructorA
+  | TupleA _ | ConsA _ | AppA _ | ProjA _
   | EmptyA _ | ThenA _ | ElseA _ | RecordUpdateA _
   | ConstrA _ | CoercA _ -> a
   | InterA lst -> InterA (List.map clear_cache_a lst)

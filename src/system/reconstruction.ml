@@ -27,9 +27,11 @@ let refine_a tenv env a t =
   | Lambda _ -> []
   | Abstract t' when subtype t' t -> [Env.empty]
   | TypeCoercion (_, t') when subtype (conj t') t -> [Env.empty]
-  | Const c when subtype (typeof_const_atom tenv c) t -> [Env.empty]
+  | Const c when subtype (Parsing.Ast.const_to_typ c) t -> [Env.empty]
   | Alias v when subtype (Env.find v env) t -> [Env.empty]
-  | Alias _ | Abstract _ | TypeCoercion _ | Const _ -> []
+  | Constructor (c,None) when subtype (get_constructor_type tenv c None) t -> [Env.empty]
+  | Alias _ | Abstract _ | TypeCoercion _ | Const _ | Constructor (_, None) -> []
+  | Constructor (_, Some _) -> failwith "TODO"
   | Tuple vs ->
     tuple_dnf (List.length vs) t
     |> List.filter (fun b -> subtype (tuple_branch_type b) t)
@@ -304,13 +306,15 @@ let rec infer_mono_a vardef tenv expl env pannot_a a =
     | _, UntypA -> log ~level:3 "Untyp annot generated a fail.@." ; Fail
     | Alias v, InferA when memvar v -> Ok (TypA)
     | Alias v, InferA -> log ~level:3 "Unknown var %s generated a fail.@." (Variable.show v) ; Fail
-    | Abstract _, InferA | Const _, InferA -> Ok (TypA)
+    | Abstract _, InferA | Const _, InferA | Constructor (_, None), InferA -> Ok (TypA)
     | Let (v1, v2), InferA ->
       if memvar v1 |> not
       then needvar v1 InferA UntypA
       else if memvar v2 |> not
       then needvar v2 InferA UntypA
       else Ok TypA
+    | Constructor (_, Some v), InferA ->
+      if memvar v then Ok TypA else needvar v InferA UntypA
     | Tuple vs, InferA ->
       begin match vs |> List.find_opt (fun v -> memvar v |> not) with
       | None -> Ok TypA

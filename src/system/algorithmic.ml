@@ -31,11 +31,6 @@ let proj p ty =
 
 exception Untypeable of Position.t list * string
 
-let typeof_const_atom tenv c =
-  match c with
-  | Parsing.Ast.Atom str -> get_atom_type tenv str
-  | c -> Parsing.Ast.const_to_typ c
-
 let unbound_variable v =
   raise (Untypeable (Variable.get_locations v, "Unbound variable "^(Variable.show v)^"."))
   
@@ -87,7 +82,10 @@ let rec typeof_a vardef tenv env (annot_a,c_a) a =
     | a, InterA branches ->
       typeof_inter (fun annot_a -> typeof_a vardef tenv env annot_a a) pos branches
     | Alias v, AliasA -> var_type v
-    | Const c, ConstA -> typeof_const_atom tenv c
+    | Const c, ConstA -> Parsing.Ast.const_to_typ c
+    | Constructor (c,v), ConstructorA ->
+      let v = Option.map var_type v in
+      get_constructor_type tenv c v
     | Abstract t, AbstractA -> t
     | Tuple vs, TupleA rs ->
       let ts = List.map2 (fun v r -> var_type v |> rename_check r) vs rs in
