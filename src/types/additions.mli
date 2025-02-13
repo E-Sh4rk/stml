@@ -20,7 +20,8 @@ and type_expr =
     | TVar of string | TVarWeak of string
     | TBase of type_base
     | TCustom of type_expr list * string
-    | TConstructor of string
+    | TAtom of string
+    | TTag of string * type_expr
     | TTuple of type_expr list
     | TRecord of bool * (string * type_expr * bool) list
     | TSList of type_regexp
@@ -47,7 +48,6 @@ val define_abstract : type_env -> string -> variance list -> type_env
 val define_types : type_env -> var_type_env -> (string * string list * type_expr) list -> type_env
 val get_atom : type_env -> string -> atom
 val get_tag : type_env -> string -> tag
-val get_constructor_type : type_env -> string -> typ option -> typ
 
 (* Operations on types *)
 

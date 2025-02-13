@@ -22,7 +22,8 @@ and type_expr =
     | TVar of string | TVarWeak of string
     | TBase of type_base
     | TCustom of type_expr list * string
-    | TConstructor of string
+    | TAtom of string
+    | TTag of string * type_expr
     | TTuple of type_expr list
     | TRecord of bool * (string * type_expr * bool) list
     | TSList of type_regexp
@@ -89,10 +90,6 @@ let get_tag tenv name =
         let t = define_tag name in
         tenv.tags <- StrMap.add name t tenv.tags ;
         t
-
-let get_constructor_type tenv name param =
-    assert (param = None) ; (* TODO *)
-    get_atom tenv name |> mk_atom
 
 let derecurse_types tenv venv defs =
     let venv =
@@ -165,7 +162,8 @@ let derecurse_types tenv venv defs =
             | TCustom (args, n) ->
                 let args = args |> List.map (aux lcl) in
                 get_name args n |> Sstt.Ty.mk_var
-            | TConstructor name -> get_constructor_type tenv name None
+            | TAtom name -> get_atom tenv name |> mk_atom
+            | TTag (name, t) -> mk_tag (get_tag tenv name) (aux lcl t)
             | TTuple ts -> mk_tuple (List.map (aux lcl) ts)
             | TRecord (is_open, fields) ->
                 let aux' (label,t,opt) = (label, (opt, aux lcl t)) in

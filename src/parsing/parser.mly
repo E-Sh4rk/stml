@@ -317,7 +317,9 @@ simple_typ:
 atomic_typ:
   x=type_constant { TBase x }
 | s=ID { builtin_type_or_custom s }
-| s=CID { TConstructor s }
+| s=CID { TAtom s }
+| s=PCID t=typ RPAREN { TTag (s, t) }
+| s=PCID RPAREN { TTag (s, TBase TUnit) }
 | s=TVAR { TVar s }
 | s=TVAR_WEAK { TVarWeak s }
 | LPAREN RPAREN { TBase TUnit }
