@@ -29,6 +29,10 @@ val disj : typ list -> typ
 
 val mk_atom : string -> typ
 val atom_any : typ
+
+type tag
+val define_tag : string -> tag
+val mk_tag : tag -> typ -> typ
 val tag_any : typ
 
 type variance = Cov | Cav | Inv

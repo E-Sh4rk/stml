@@ -59,6 +59,10 @@ let from_label lbl = Sstt.Label.name lbl
 
 let mk_atom name = name |> Sstt.Atoms.Atom.mk |> Sstt.Descr.mk_atom |> Sstt.Ty.mk_descr
 let atom_any = Sstt.Atoms.any () |> Sstt.Descr.mk_atoms |> Sstt.Ty.mk_descr
+
+type tag = Sstt.TagComp.Tag.t
+let define_tag name = name |> Sstt.TagComp.Tag.mk
+let mk_tag tag ty = Sstt.Descr.mk_tag (tag, ty) |> Sstt.Ty.mk_descr
 let tag_any = Sstt.Tags.any () |> Sstt.Descr.mk_tags |> Sstt.Ty.mk_descr
 
 type variance = Cov | Cav | Inv
