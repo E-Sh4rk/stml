@@ -25,8 +25,7 @@ type projection = Pi of int * int | Field of string | Hd | Tl
 
 type 'typ type_annot = Unnanoted | ADomain of 'typ list
 
-(* TODO: support parametrized constructors (tags) *)
-(* TODO: add constructors to patterns *)
+(* TODO: add atoms and tags to patterns *)
 type ('a, 'typ, 'v) pattern =
 | PatType of 'typ
 | PatVar of 'v
@@ -37,30 +36,31 @@ type ('a, 'typ, 'v) pattern =
 | PatRecord of (string * (('a, 'typ, 'v) pattern)) list * bool
 | PatAssign of 'v * const
 
-and ('a, 'typ, 'ato, 'v) ast =
+and ('a, 'typ, 'ato, 'tag, 'v) ast =
 | Abstract of 'typ
 | Const of const
 | Var of 'v
 | Atom of 'ato
-| Lambda of ('typ type_annot) * 'v * ('a, 'typ, 'ato, 'v) t
-| Fixpoint of ('a, 'typ, 'ato, 'v) t
-| Ite of ('a, 'typ, 'ato, 'v) t * 'typ * ('a, 'typ, 'ato, 'v) t * ('a, 'typ, 'ato, 'v) t
-| App of ('a, 'typ, 'ato, 'v) t * ('a, 'typ, 'ato, 'v) t
-| Let of 'v * ('a, 'typ, 'ato, 'v) t * ('a, 'typ, 'ato, 'v) t
-| Tuple of ('a, 'typ, 'ato, 'v) t list
-| Cons of ('a, 'typ, 'ato, 'v) t * ('a, 'typ, 'ato, 'v) t
-| Projection of projection * ('a, 'typ, 'ato, 'v) t
-| RecordUpdate of ('a, 'typ, 'ato, 'v) t * string * ('a, 'typ, 'ato, 'v) t option
-| TypeConstr of ('a, 'typ, 'ato, 'v) t * 'typ list
-| TypeCoercion of ('a, 'typ, 'ato, 'v) t * 'typ list
-| PatMatch of ('a, 'typ, 'ato, 'v) t * (('a, 'typ, 'v) pattern * ('a, 'typ, 'ato, 'v) t) list
-| TopLevel of ('a, 'typ, 'ato, 'v) t
+| Tag of 'tag * ('a, 'typ, 'ato, 'tag, 'v) t
+| Lambda of ('typ type_annot) * 'v * ('a, 'typ, 'ato, 'tag, 'v) t
+| Fixpoint of ('a, 'typ, 'ato, 'tag, 'v) t
+| Ite of ('a, 'typ, 'ato, 'tag, 'v) t * 'typ * ('a, 'typ, 'ato, 'tag, 'v) t * ('a, 'typ, 'ato, 'tag, 'v) t
+| App of ('a, 'typ, 'ato, 'tag, 'v) t * ('a, 'typ, 'ato, 'tag, 'v) t
+| Let of 'v * ('a, 'typ, 'ato, 'tag, 'v) t * ('a, 'typ, 'ato, 'tag, 'v) t
+| Tuple of ('a, 'typ, 'ato, 'tag, 'v) t list
+| Cons of ('a, 'typ, 'ato, 'tag, 'v) t * ('a, 'typ, 'ato, 'tag, 'v) t
+| Projection of projection * ('a, 'typ, 'ato, 'tag, 'v) t
+| RecordUpdate of ('a, 'typ, 'ato, 'tag, 'v) t * string * ('a, 'typ, 'ato, 'tag, 'v) t option
+| TypeConstr of ('a, 'typ, 'ato, 'tag, 'v) t * 'typ list
+| TypeCoercion of ('a, 'typ, 'ato, 'tag, 'v) t * 'typ list
+| PatMatch of ('a, 'typ, 'ato, 'tag, 'v) t * (('a, 'typ, 'v) pattern * ('a, 'typ, 'ato, 'tag, 'v) t) list
+| TopLevel of ('a, 'typ, 'ato, 'tag, 'v) t
 
-and ('a, 'typ, 'ato, 'v) t = 'a * ('a, 'typ, 'ato, 'v) ast
+and ('a, 'typ, 'ato, 'tag, 'v) t = 'a * ('a, 'typ, 'ato, 'tag, 'v) ast
 
-type annot_expr = (annotation, typ, atom, Variable.t) t
-type expr = (unit, typ, atom, Variable.t) t
-type parser_expr = (annotation, type_expr, string, varname) t
+type annot_expr = (annotation, typ, atom, tag, Variable.t) t
+type expr = (unit, typ, atom, tag, Variable.t) t
+type parser_expr = (annotation, type_expr, string, string, varname) t
 
 module Expr : Pomap_intf.PARTIAL_ORDER with type el = expr
 module ExprMap : Pomap_intf.POMAP with type key = expr
@@ -69,8 +69,8 @@ type name_var_map = Variable.t StrMap.t
 val empty_name_var_map : name_var_map
 
 val unique_exprid : unit -> exprid
-val identifier_of_expr : (annotation, 'a, 'b, 'c) t -> exprid
-val position_of_expr : (annotation, 'a, 'b, 'c) t -> Position.t
+val identifier_of_expr : (annotation, 'a, 'b, 'c, 'd) t -> exprid
+val position_of_expr : (annotation, 'a, 'b, 'c, 'd) t -> Position.t
 
 val new_annot : Position.t -> annotation
 val copy_annot : annotation -> annotation

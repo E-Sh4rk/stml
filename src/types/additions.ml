@@ -38,12 +38,14 @@ type type_def = string * string list * type_expr
 type type_env = {
     aliases : typ StrMap.t ; (* User-defined non-parametric types *)
     mutable atoms : atom StrMap.t ; (* Atoms *)
+    mutable tags : tag StrMap.t ; (* Tags *)
     defs : type_def list ; (* History of definitions *)
     abs : abstract StrMap.t (* Abstract types *)
 }
 type var_type_env = TVar.t StrMap.t (* Var types *)
 
-let empty_tenv = { aliases=StrMap.empty ; atoms=StrMap.empty ; defs=[] ; abs=StrMap.empty }
+let empty_tenv = { aliases=StrMap.empty ; atoms=StrMap.empty ;
+    tags=StrMap.empty ; defs=[] ; abs=StrMap.empty }
 let empty_vtenv = StrMap.empty
 
 let type_base_to_typ t =
@@ -80,6 +82,13 @@ let get_atom tenv name =
         let a = define_atom name in
         tenv.atoms <- StrMap.add name a tenv.atoms ;
         a
+let get_tag tenv name =
+    match StrMap.find_opt name tenv.tags with
+    | Some t -> t
+    | None ->
+        let t = define_tag name in
+        tenv.tags <- StrMap.add name t tenv.tags ;
+        t
 
 let get_constructor_type tenv name param =
     assert (param = None) ; (* TODO *)

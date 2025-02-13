@@ -44,32 +44,32 @@ type ('a, 'typ, 'v) pattern =
 | PatAssign of 'v * const
 [@@deriving ord]
 
-and ('a, 'typ, 'ato, 'v) ast =
+and ('a, 'typ, 'ato, 'tag, 'v) ast =
 | Abstract of 'typ
 | Const of const
 | Var of 'v
 | Atom of 'ato
-| Lambda of ('typ type_annot) * 'v * ('a, 'typ, 'ato, 'v) t
-| Fixpoint of ('a, 'typ, 'ato, 'v) t
-| Ite of ('a, 'typ, 'ato, 'v) t * 'typ * ('a, 'typ, 'ato, 'v) t * ('a, 'typ, 'ato, 'v) t
-| App of ('a, 'typ, 'ato, 'v) t * ('a, 'typ, 'ato, 'v) t
-| Let of 'v * ('a, 'typ, 'ato, 'v) t * ('a, 'typ, 'ato, 'v) t
-| Tuple of ('a, 'typ, 'ato, 'v) t list
-| Cons of ('a, 'typ, 'ato, 'v) t * ('a, 'typ, 'ato, 'v) t
-| Projection of projection * ('a, 'typ, 'ato, 'v) t
-| RecordUpdate of ('a, 'typ, 'ato, 'v) t * string * ('a, 'typ, 'ato, 'v) t option
-| TypeConstr of ('a, 'typ, 'ato, 'v) t * 'typ list
-| TypeCoercion of ('a, 'typ, 'ato, 'v) t * 'typ list
-| PatMatch of ('a, 'typ, 'ato, 'v) t * (('a, 'typ, 'v) pattern * ('a, 'typ, 'ato, 'v) t) list
-| TopLevel of ('a, 'typ, 'ato, 'v) t
+| Tag of 'tag * ('a, 'typ, 'ato, 'tag, 'v) t
+| Lambda of ('typ type_annot) * 'v * ('a, 'typ, 'ato, 'tag, 'v) t
+| Fixpoint of ('a, 'typ, 'ato, 'tag, 'v) t
+| Ite of ('a, 'typ, 'ato, 'tag, 'v) t * 'typ * ('a, 'typ, 'ato, 'tag, 'v) t * ('a, 'typ, 'ato, 'tag, 'v) t
+| App of ('a, 'typ, 'ato, 'tag, 'v) t * ('a, 'typ, 'ato, 'tag, 'v) t
+| Let of 'v * ('a, 'typ, 'ato, 'tag, 'v) t * ('a, 'typ, 'ato, 'tag, 'v) t
+| Tuple of ('a, 'typ, 'ato, 'tag, 'v) t list
+| Cons of ('a, 'typ, 'ato, 'tag, 'v) t * ('a, 'typ, 'ato, 'tag, 'v) t
+| Projection of projection * ('a, 'typ, 'ato, 'tag, 'v) t
+| RecordUpdate of ('a, 'typ, 'ato, 'tag, 'v) t * string * ('a, 'typ, 'ato, 'tag, 'v) t option
+| TypeConstr of ('a, 'typ, 'ato, 'tag, 'v) t * 'typ list
+| TypeCoercion of ('a, 'typ, 'ato, 'tag, 'v) t * 'typ list
+| PatMatch of ('a, 'typ, 'ato, 'tag, 'v) t * (('a, 'typ, 'v) pattern * ('a, 'typ, 'ato, 'tag, 'v) t) list
+| TopLevel of ('a, 'typ, 'ato, 'tag, 'v) t
 [@@deriving ord]
 
-and ('a, 'typ, 'ato, 'v) t = 'a * ('a, 'typ, 'ato, 'v) ast
+and ('a, 'typ, 'ato, 'tag, 'v) t = 'a * ('a, 'typ, 'ato, 'tag, 'v) ast
 
-type annot_expr = (annotation, typ, atom, Variable.t) t
-type expr = (unit, typ, atom, Variable.t) t
-type parser_expr = (annotation, type_expr, string, varname) t
-
+type annot_expr = (annotation, typ, atom, tag, Variable.t) t
+type expr = (unit, typ, atom, tag, Variable.t) t
+type parser_expr = (annotation, type_expr, string, string, varname) t
 module Expr = struct
     type el = expr
     type ord = Unknown | Lower | Equal | Greater
@@ -77,6 +77,7 @@ module Expr = struct
         let cstruct = compare
             (fun () () -> 0)
             (fun _ _ -> 0)
+            Stdlib.compare
             Stdlib.compare
             Variable.compare t1 t2
         in match cstruct with
@@ -87,6 +88,7 @@ module Expr = struct
                 let cexact = compare
                     (fun () () -> 0)
                     Types.Compare.compare_typ
+                    Stdlib.compare
                     Stdlib.compare
                     Variable.compare t1 t2 in
                 match cexact with
@@ -138,6 +140,7 @@ let parser_expr_to_annot_expr tenv vtenv name_var_map e =
             then Var (StrMap.find str env)
             else raise (SymbolError ("undefined symbol "^str))
         | Atom str -> Atom (get_atom tenv str)
+        | Tag (str, e) -> Tag (get_tag tenv str, aux vtenv env e)
         | Lambda (t,str,e) ->
             let (t, vtenv) = match t with
             | Unnanoted -> (Unnanoted, vtenv)
@@ -278,6 +281,7 @@ let rec unannot (_,e) =
     | Const c -> Const c
     | Var v -> Var v
     | Atom a -> Atom a
+    | Tag (t, e) -> Tag (t, unannot e)
     | Lambda (t, v, e) -> Lambda (t, v, unannot e)
     | Fixpoint e -> Fixpoint (unannot e)
     | Ite (e, t, e1, e2) -> Ite (unannot e, t, unannot e1, unannot e2)
@@ -328,6 +332,7 @@ let normalize_bvs e =
         | Var v when VarMap.mem v map -> Var (VarMap.find v map)
         | Var v -> Var v
         | Atom a -> Atom a
+        | Tag (t, e) -> Tag (t, aux depth map e)
         | Lambda (t, v, e) ->
             let v' = get_predefined_var depth in
             let map = VarMap.add v v' map in
@@ -396,6 +401,7 @@ let map_ast f e =
         | Const c -> Const c
         | Var v -> Var v
         | Atom a -> Atom a
+        | Tag (t, e) -> Tag (t, aux e)
         | Lambda (annot, v, e) -> Lambda (annot, v, aux e)
         | Fixpoint e -> Fixpoint (aux e)
         | Ite (e, t, e1, e2) -> Ite (aux e, t, aux e1, aux e2)

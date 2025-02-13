@@ -272,6 +272,7 @@ let remove_toplevel e =
     | Abstract t -> Abstract t
     | Const c -> Const c
     | Atom a -> Atom a
+    | Tag (t, e) -> Tag (t, aux' e)
     | Var v -> Var v
     | Ite (e, t, e1, e2) -> Ite (aux' e, t, aux' e1, aux' e2)
     | App (e1, e2) -> App (aux' e1, aux' e2)
@@ -303,6 +304,9 @@ let convert_to_msc ast =
       | Ast.Abstract t -> ([], expr_var_map, Abstract t)
       | Ast.Const c -> ([], expr_var_map, Const c)
       | Ast.Atom a -> ([], expr_var_map, Atom a)
+      | Ast.Tag (t, e) ->
+        let (defs, expr_var_map, x) = to_defs_and_x expr_var_map e in
+        (defs, expr_var_map, Tag (t, x))
       | Ast.Var v when Variable.is_binding_var v -> raise (IsVar v)
       | Ast.Var v -> ([], expr_var_map, Alias v)
       | Ast.Lambda (t, v, e) ->
