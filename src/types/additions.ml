@@ -93,6 +93,7 @@ let get_tag tenv name =
         tenv.tags <- StrMap.add name t tenv.tags ;
         t
 
+(* TODO: We should be able to simplify this function using SSTT API *)
 let derecurse_types tenv venv defs =
     let venv =
         let h = Hashtbl.create 16 in

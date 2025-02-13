@@ -293,7 +293,7 @@ prefix:
 
 %inline param_type_def:
 | name=ID EQUAL t=typ_norec { (name, [], t) }
-| name=ID LPAREN params=separated_nonempty_list(COMMA, TVAR) RPAREN EQUAL t=typ_norec { (name, params, t) }
+| name=ID LPAREN params=separated_list(COMMA, TVAR) RPAREN EQUAL t=typ_norec { (name, params, t) }
 
 typ:
   t=typ_norec { t }
