@@ -19,7 +19,8 @@ type type_regexp = type_expr Sstt.Extensions.Lists.regexp
 and type_expr =
     | TVar of string | TVarWeak of string
     | TBase of type_base
-    | TCustom of type_expr list * string
+    | TCustom of string
+    | TApp of  string * type_expr list
     | TAtom of string
     | TTag of string * type_expr
     | TTuple of type_expr list

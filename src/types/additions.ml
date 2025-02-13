@@ -21,7 +21,8 @@ type type_regexp = type_expr Sstt.Extensions.Lists.regexp
 and type_expr =
     | TVar of string | TVarWeak of string
     | TBase of type_base
-    | TCustom of type_expr list * string
+    | TCustom of string
+    | TApp of  string * type_expr list
     | TAtom of string
     | TTag of string * type_expr
     | TTuple of type_expr list
@@ -67,15 +68,16 @@ let type_base_to_typ t =
     | TAtomAny -> atom_any
     | TRecordAny -> record_any
 
-let get_non_parametric_type tenv name =
+let get_non_parametric_alias tenv name =
     StrMap.find_opt name tenv.aliases
-let get_abstract_type tenv name tys =
+let get_abstract_type tenv name otys =
     match StrMap.find_opt name tenv.abs with
     | None -> None
     | Some abs ->
-        if tys = []
-        then Some (mk_abstract_any abs)
-        else Some (mk_abstract abs tys)
+        begin match otys with
+        | None -> Some (mk_abstract_any abs)
+        | Some tys -> Some (mk_abstract abs tys)
+        end
 let get_atom tenv name =
     match StrMap.find_opt name tenv.atoms with
     | Some a -> a
@@ -105,8 +107,9 @@ let derecurse_types tenv venv defs =
         List.iter (fun (name, params, def) ->
             Hashtbl.add henv name (def, params, [])) defs ;
         let rec get_name args name =
-            match Hashtbl.find henv name with
-            | def, params, lst ->
+            match Hashtbl.find_opt henv name with
+            | Some (def, params, lst) ->
+                let args = match args with None -> [] | Some args -> args in
                 let cached = lst |> List.find_opt (fun (args',_) ->
                     try List.for_all2 (==) args args' with Invalid_argument _ -> false) in
                 begin match cached with
@@ -123,14 +126,14 @@ let derecurse_types tenv venv defs =
                     end
                 | Some (_, v) -> v
                 end
-            | exception Not_found ->
+            | None ->
                 begin match get_abstract_type tenv name args with
                 | Some t ->
                     let v = TVar.mk_unregistered () in
                     eqs := (v,t)::!eqs ;
                     v    
-                | None when args = [] ->
-                    begin match get_non_parametric_type tenv name with
+                | None when args = None ->
+                    begin match get_non_parametric_alias tenv name with
                     | Some t ->
                         let v = TVar.mk_unregistered () in
                         eqs := (v,t)::!eqs ;
@@ -159,9 +162,11 @@ let derecurse_types tenv venv defs =
                     TVar.typ t
                 end
             | TBase tb -> type_base_to_typ tb
-            | TCustom (args, n) ->
+            | TCustom n ->
+                get_name None n |> Sstt.Ty.mk_var
+            | TApp (n, args) ->
                 let args = args |> List.map (aux lcl) in
-                get_name args n |> Sstt.Ty.mk_var
+                get_name (Some args) n |> Sstt.Ty.mk_var
             | TAtom name -> get_atom tenv name |> mk_atom
             | TTag (name, t) -> mk_tag (get_tag tenv name) (aux lcl t)
             | TTuple ts -> mk_tuple (List.map (aux lcl) ts)
@@ -206,7 +211,7 @@ let derecurse_types tenv venv defs =
         let res = defs |> List.map (fun (name, params, _) ->
             let params = List.map (fun _ -> TVar.mk_unregistered ()) params in
             let args = params |> List.map TVar.typ in
-            let node = get_name args name in
+            let node = get_name (Some args) name in
             name, params, node) in
         List.iter (fun (name, _, _) -> Hashtbl.remove henv name) defs ;
         res

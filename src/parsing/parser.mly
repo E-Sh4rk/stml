@@ -90,7 +90,7 @@
         let nb = Str.matched_group 1 str in
         TBase (TTupleN (int_of_string nb))
       else
-        TCustom ([], str)
+        TCustom str
 %}
 
 %token EOF
@@ -306,7 +306,7 @@ typ_norec:
 
 simple_typ:
   t=atomic_typ { t }
-| s=ID LPAREN ts=separated_nonempty_list(COMMA, simple_typ) RPAREN { TCustom(ts, s) }
+| s=ID LPAREN ts=separated_list(COMMA, simple_typ) RPAREN { TApp(s, ts) }
 | lhs=simple_typ ARROW rhs=simple_typ { TArrow (lhs, rhs) }
 | lhs=simple_typ CONS rhs=simple_typ  { TCons (lhs, rhs) }
 | NEG t=simple_typ { TNeg t }
