@@ -37,7 +37,7 @@ and type_expr =
 type type_def = string * string list * type_expr
 type type_env = {
     aliases : typ StrMap.t ; (* User-defined non-parametric types *)
-    atoms : atom StrMap.t ; (* Atoms *) 
+    mutable atoms : atom StrMap.t ; (* Atoms *)
     defs : type_def list ; (* History of definitions *)
     abs : abstract StrMap.t (* Abstract types *)
 }
@@ -76,7 +76,11 @@ let get_abstract_type tenv name tys =
 let get_atom tenv name =
     match StrMap.find_opt name tenv.atoms with
     | Some a -> a
-    | None -> failwith "TODO" (* create constructor *)
+    | None ->
+        let a = define_atom name in
+        tenv.atoms <- StrMap.add name a tenv.atoms ;
+        a
+
 let get_constructor_type tenv name param =
     assert (param = None) ; (* TODO *)
     get_atom tenv name |> mk_atom

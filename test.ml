@@ -241,11 +241,10 @@ let implict10 = fun p ->
 
 
 let example11 = fun (p : (any, any)) ->
-  if and_ (is_int (fst p)) (is_int (snd p)) is true then g p else ()
+  if and_ (is_int (fst p)) (is_int (snd p)) is true then g p else No
 
 let implict11 = fun p ->
-  if and_ (is_int (fst p)) (is_int (snd p)) is true then g p else ()
-
+  if and_ (is_int (fst p)) (is_int (snd p)) is true then g p else No
 
 let example12 = fun (p : (any, any)) ->
   if is_int (fst p) is true then true else false
