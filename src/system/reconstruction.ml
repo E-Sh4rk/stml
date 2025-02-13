@@ -31,7 +31,7 @@ let refine_a env a t =
   | Alias v when subtype (Env.find v env) t -> [Env.empty]
   | Atom a when subtype (mk_atom a) t -> [Env.empty]
   | Alias _ | Abstract _ | TypeCoercion _ | Const _ | Atom _ -> []
-  | Tag _ -> failwith "TODO"
+  | Tag (tag, v) -> [Env.singleton v (destruct_tag tag t)]
   | Tuple vs ->
     tuple_dnf (List.length vs) t
     |> List.filter (fun b -> subtype (tuple_branch_type b) t)
