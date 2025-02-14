@@ -16,6 +16,8 @@ let domain_of_proj p ty =
     mk_cons ty list_typ
   | Parsing.Ast.Tl ->
     mk_cons any (cap ty list_typ)
+  | Parsing.Ast.PiTag tag ->
+    mk_tag tag ty
 
 let proj p ty =
   let open Parsing.Ast in
@@ -24,6 +26,7 @@ let proj p ty =
   | Pi (n,i) -> pi n i ty
   | Hd -> destruct_list ty |> fst
   | Tl -> destruct_list ty |> snd
+  | PiTag tag -> destruct_tag tag ty
 
 (* ====================================== *)
 (* =============== TYPEOF =============== *)

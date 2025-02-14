@@ -29,12 +29,14 @@ val disj : typ list -> typ
 
 type atom
 val pp_atom : Format.formatter -> atom -> unit
+val compare_atom : atom -> atom -> int
 val define_atom : string -> atom
 val mk_atom : atom -> typ
 val atom_any : typ
 
 type tag
 val pp_tag : Format.formatter -> tag -> unit
+val compare_tag : tag -> tag -> int
 val define_tag : string -> tag
 val mk_tag : tag -> typ -> typ
 val destruct_tag : tag -> typ -> typ

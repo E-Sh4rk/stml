@@ -27,7 +27,7 @@ type const =
 | String of string
 [@@deriving show, ord]
 
-type projection = Pi of int * int | Field of string | Hd | Tl
+type projection = Pi of int * int | Field of string | Hd | Tl | PiTag of tag
 [@@deriving show, ord]
 
 type 'typ type_annot = Unnanoted | ADomain of 'typ list
@@ -77,8 +77,8 @@ module Expr = struct
         let cstruct = compare
             (fun () () -> 0)
             (fun _ _ -> 0)
-            Stdlib.compare
-            Stdlib.compare
+            compare_atom
+            compare_tag
             Variable.compare t1 t2
         in match cstruct with
         | -1 -> Lower
@@ -88,8 +88,8 @@ module Expr = struct
                 let cexact = compare
                     (fun () () -> 0)
                     Types.Compare.compare_typ
-                    Stdlib.compare
-                    Stdlib.compare
+                    compare_atom
+                    compare_tag
                     Variable.compare t1 t2 in
                 match cexact with
                 | -1 -> Lower

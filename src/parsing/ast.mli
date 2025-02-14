@@ -21,7 +21,7 @@ type const =
 | Char of char
 | String of string
 
-type projection = Pi of int * int | Field of string | Hd | Tl
+type projection = Pi of int * int | Field of string | Hd | Tl | PiTag of tag
 
 type 'typ type_annot = Unnanoted | ADomain of 'typ list
 
