@@ -41,6 +41,22 @@ let test_map x =
   let map = add_map map "key" 0 in
   (map, get_map map false)
 
+(* ========= TAGGED VALUES ======== *)
+
+let proj_a (A(v)) = v
+let proj_ab x =
+  match x with
+  | A(v) -> v
+  | B(v) -> v
+  end
+
+type clist('a) = Nil | Cons('a, clist('a))
+let rec map_clist f lst = (*(lst:clist('a)) =*)
+  match lst with
+  | Cons(v,tail) -> Cons(f v, map_clist f tail)
+  | Nil -> Nil
+  end
+
 (* ================================= *)
 let succ = <int->int>
 

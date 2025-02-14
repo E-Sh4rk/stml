@@ -33,14 +33,15 @@ type projection = Pi of int * int | Field of string | Hd | Tl | PiTag of tag
 type 'typ type_annot = Unnanoted | ADomain of 'typ list
 [@@deriving show, ord]
 
-type ('a, 'typ, 'v) pattern =
+type ('a, 'typ, 'tag, 'v) pattern =
 | PatType of 'typ
 | PatVar of 'v
-| PatAnd of ('a, 'typ, 'v) pattern * ('a, 'typ, 'v) pattern
-| PatOr of ('a, 'typ, 'v) pattern * ('a, 'typ, 'v) pattern
-| PatTuple of ('a, 'typ, 'v) pattern list
-| PatCons of ('a, 'typ, 'v) pattern * ('a, 'typ, 'v) pattern
-| PatRecord of (string * (('a, 'typ, 'v) pattern)) list * bool
+| PatTag of 'tag * ('a, 'typ, 'tag, 'v) pattern
+| PatAnd of ('a, 'typ, 'tag, 'v) pattern * ('a, 'typ, 'tag, 'v) pattern
+| PatOr of ('a, 'typ, 'tag, 'v) pattern * ('a, 'typ, 'tag, 'v) pattern
+| PatTuple of ('a, 'typ, 'tag, 'v) pattern list
+| PatCons of ('a, 'typ, 'tag, 'v) pattern * ('a, 'typ, 'tag, 'v) pattern
+| PatRecord of (string * (('a, 'typ, 'tag, 'v) pattern)) list * bool
 | PatAssign of 'v * const
 [@@deriving ord]
 
@@ -61,7 +62,7 @@ and ('a, 'typ, 'ato, 'tag, 'v) ast =
 | RecordUpdate of ('a, 'typ, 'ato, 'tag, 'v) t * string * ('a, 'typ, 'ato, 'tag, 'v) t option
 | TypeConstr of ('a, 'typ, 'ato, 'tag, 'v) t * 'typ list
 | TypeCoercion of ('a, 'typ, 'ato, 'tag, 'v) t * 'typ list
-| PatMatch of ('a, 'typ, 'ato, 'tag, 'v) t * (('a, 'typ, 'v) pattern * ('a, 'typ, 'ato, 'tag, 'v) t) list
+| PatMatch of ('a, 'typ, 'ato, 'tag, 'v) t * (('a, 'typ, 'tag, 'v) pattern * ('a, 'typ, 'ato, 'tag, 'v) t) list
 | TopLevel of ('a, 'typ, 'ato, 'tag, 'v) t
 [@@deriving ord]
 
@@ -214,6 +215,10 @@ let parser_expr_to_annot_expr tenv vtenv name_var_map e =
                 else
                     let var = find_or_def_var str in
                     (PatVar var, vtenv, StrMap.singleton str var)
+            | PatTag (str, p) ->
+                let tag = get_tag tenv str in
+                let (p, vtenv, env) = aux_p vtenv env p in
+                (PatTag (tag, p), vtenv, env)
             | PatAnd (p1, p2) ->
                 let (p1, vtenv, env1) = aux_p vtenv env p1 in
                 let (p2, vtenv, env2) = aux_p vtenv env p2 in
@@ -264,6 +269,7 @@ let map_p f p =
             | PatAssign (v, e) -> PatAssign (v, e)
             | PatType t -> PatType t
             | PatVar v -> PatVar v
+            | PatTag (tag, p) -> PatTag (tag, aux p)
             | PatAnd (p1, p2) -> PatAnd (aux p1, aux p2)
             | PatOr (p1, p2) -> PatOr (aux p1, aux p2)
             | PatTuple ps -> PatTuple (List.map aux ps)
@@ -304,9 +310,10 @@ let rec unannot (_,e) =
 and unannot_pat pat =
     let rec aux pat = 
         match pat with
-        | PatAssign (v, c) -> PatAssign (v, c (* unannot e *))
+        | PatAssign (v, c) -> PatAssign (v, c)
         | PatType t -> PatType t
         | PatVar v -> PatVar v
+        | PatTag (tag, p) -> PatTag (tag, aux p)
         | PatAnd (p1, p2) -> PatAnd (aux p1, aux p2)
         | PatOr (p1, p2) -> PatOr (aux p1, aux p2)
         | PatTuple ps -> PatTuple (List.map aux ps)

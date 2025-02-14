@@ -147,6 +147,7 @@ let rec type_of_pat pat =
   match pat with
   | PatType t -> t
   | PatVar _ -> any
+  | PatTag (tag, p) -> mk_tag tag (type_of_pat p)
   | PatAnd (p1, p2) ->
     cap (type_of_pat p1) (type_of_pat p2)
   | PatOr (p1, p2) ->
@@ -165,6 +166,7 @@ let rec vars_of_pat pat =
   | PatType _ -> VarSet.empty
   | PatVar x when Variable.equals x dummy_pat_var -> VarSet.empty
   | PatVar x -> VarSet.singleton x
+  | PatTag (_, p) -> vars_of_pat p
   | PatOr (p1, p2) ->
     VarSet.inter (vars_of_pat p1) (vars_of_pat p2)
   | PatTuple ps -> List.fold_left VarSet.union VarSet.empty (List.map vars_of_pat ps)
@@ -182,6 +184,8 @@ let rec def_of_var_pat pat v e =
   match pat with
   | PatVar v' when Variable.equals v v' -> e
   | PatVar _ -> assert false
+  | PatTag (tag, p) ->
+    def_of_var_pat p v (annot, Projection (PiTag tag, e))
   | PatAnd (p1, p2) ->
     if vars_of_pat p1 |> VarSet.mem v
     then def_of_var_pat p1 v e

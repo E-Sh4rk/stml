@@ -25,15 +25,15 @@ type projection = Pi of int * int | Field of string | Hd | Tl | PiTag of tag
 
 type 'typ type_annot = Unnanoted | ADomain of 'typ list
 
-(* TODO: add atoms and tags to patterns *)
-type ('a, 'typ, 'v) pattern =
+type ('a, 'typ, 'tag, 'v) pattern =
 | PatType of 'typ
 | PatVar of 'v
-| PatAnd of ('a, 'typ, 'v) pattern * ('a, 'typ, 'v) pattern
-| PatOr of ('a, 'typ, 'v) pattern * ('a, 'typ, 'v) pattern
-| PatTuple of ('a, 'typ, 'v) pattern list
-| PatCons of ('a, 'typ, 'v) pattern * ('a, 'typ, 'v) pattern
-| PatRecord of (string * (('a, 'typ, 'v) pattern)) list * bool
+| PatTag of 'tag * ('a, 'typ, 'tag, 'v) pattern
+| PatAnd of ('a, 'typ, 'tag, 'v) pattern * ('a, 'typ, 'tag, 'v) pattern
+| PatOr of ('a, 'typ, 'tag, 'v) pattern * ('a, 'typ, 'tag, 'v) pattern
+| PatTuple of ('a, 'typ, 'tag, 'v) pattern list
+| PatCons of ('a, 'typ, 'tag, 'v) pattern * ('a, 'typ, 'tag, 'v) pattern
+| PatRecord of (string * (('a, 'typ, 'tag, 'v) pattern)) list * bool
 | PatAssign of 'v * const
 
 and ('a, 'typ, 'ato, 'tag, 'v) ast =
@@ -53,7 +53,7 @@ and ('a, 'typ, 'ato, 'tag, 'v) ast =
 | RecordUpdate of ('a, 'typ, 'ato, 'tag, 'v) t * string * ('a, 'typ, 'ato, 'tag, 'v) t option
 | TypeConstr of ('a, 'typ, 'ato, 'tag, 'v) t * 'typ list
 | TypeCoercion of ('a, 'typ, 'ato, 'tag, 'v) t * 'typ list
-| PatMatch of ('a, 'typ, 'ato, 'tag, 'v) t * (('a, 'typ, 'v) pattern * ('a, 'typ, 'ato, 'tag, 'v) t) list
+| PatMatch of ('a, 'typ, 'ato, 'tag, 'v) t * (('a, 'typ, 'tag, 'v) pattern * ('a, 'typ, 'ato, 'tag, 'v) t) list
 | TopLevel of ('a, 'typ, 'ato, 'tag, 'v) t
 
 and ('a, 'typ, 'ato, 'tag, 'v) t = 'a * ('a, 'typ, 'ato, 'tag, 'v) ast

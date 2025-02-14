@@ -392,6 +392,9 @@ simple_pattern_nocons:
 atomic_pattern:
   COLON t=atomic_typ { PatType t }
 | v=ID  { PatVar v }
+| a=CID { PatType (TAtom a) }
+| t=PCID p=pattern RPAREN { PatTag (t,p) }
+| t=PCID RPAREN { PatType (TTag (t,TBase TUnit)) }
 | LPAREN RPAREN { PatType (TBase TUnit) }
 | LBRACE fs=separated_list(SEMICOLON, pat_field) o=optional_open RBRACE { PatRecord (fs, o) }
 | LPAREN p=pattern RPAREN { p }
