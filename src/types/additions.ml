@@ -36,18 +36,16 @@ and type_expr =
     | TNeg of type_expr
     | TWhere of type_expr * (string * string list * type_expr) list
 
-type type_def = string * string list * type_expr
 type type_env = {
-    aliases : typ StrMap.t ; (* User-defined non-parametric types *)
+    aliases : (typ * TVar.t list) StrMap.t ; (* User-defined non-parametric types *)
     mutable atoms : atom StrMap.t ; (* Atoms *)
     mutable tags : tag StrMap.t ; (* Tags *)
-    defs : type_def list ; (* History of definitions *)
     abs : abstract StrMap.t (* Abstract types *)
 }
 type var_type_env = TVar.t StrMap.t (* Var types *)
 
 let empty_tenv = { aliases=StrMap.empty ; atoms=StrMap.empty ;
-    tags=StrMap.empty ; defs=[] ; abs=StrMap.empty }
+    tags=StrMap.empty ; abs=StrMap.empty }
 let empty_vtenv = StrMap.empty
 
 let type_base_to_typ t =
@@ -68,8 +66,13 @@ let type_base_to_typ t =
     | TAtomAny -> atom_any
     | TRecordAny -> record_any
 
-let get_non_parametric_alias tenv name =
-    StrMap.find_opt name tenv.aliases
+let get_alias tenv name args =
+    match StrMap.find_opt name tenv.aliases with
+    | None -> None
+    | Some (ty, ps) when List.length ps = List.length args ->
+        let s = List.combine ps args |> Subst.construct in
+        Some (Subst.apply s ty)
+    | Some _ -> None
 let get_abstract_type tenv name otys =
     match StrMap.find_opt name tenv.abs with
     | None -> None
@@ -93,7 +96,6 @@ let get_tag tenv name =
         tenv.tags <- StrMap.add name t tenv.tags ;
         t
 
-(* TODO: We should be able to simplify this function using SSTT API *)
 let derecurse_types tenv venv defs =
     let venv =
         let h = Hashtbl.create 16 in
@@ -102,15 +104,13 @@ let derecurse_types tenv venv defs =
     in
     let henv = Hashtbl.create 16 in
     let eqs = ref [] in
-    List.iter (fun (name, params, def) ->
-        Hashtbl.add henv name (def, params, [])) tenv.defs ;
     let rec derecurse_types defs =
         List.iter (fun (name, params, def) ->
             Hashtbl.add henv name (def, params, [])) defs ;
-        let rec get_name args name =
+        let rec get_name oargs name =
+            let args = match oargs with None -> [] | Some args -> args in
             match Hashtbl.find_opt henv name with
             | Some (def, params, lst) ->
-                let args = match args with None -> [] | Some args -> args in
                 let cached = lst |> List.find_opt (fun (args',_) ->
                     try List.for_all2 (==) args args' with Invalid_argument _ -> false) in
                 begin match cached with
@@ -128,21 +128,20 @@ let derecurse_types tenv venv defs =
                 | Some (_, v) -> v
                 end
             | None ->
-                begin match get_abstract_type tenv name args with
+                begin match get_alias tenv name args with
                 | Some t ->
                     let v = TVar.mk_unregistered () in
                     eqs := (v,t)::!eqs ;
-                    v    
-                | None when args = None ->
-                    begin match get_non_parametric_alias tenv name with
+                    v
+                | None ->
+                    begin match get_abstract_type tenv name oargs with
                     | Some t ->
                         let v = TVar.mk_unregistered () in
                         eqs := (v,t)::!eqs ;
-                        v
+                        v    
                     | None -> raise (TypeDefinitionError (Printf.sprintf "Type %s undefined!" name))
                     end    
-                | None -> raise (TypeDefinitionError (Printf.sprintf "Type %s undefined!" name))
-                end
+                end    
         and aux lcl t =
             match t with
             | TVar v ->
@@ -238,14 +237,14 @@ let type_exprs_to_typs env venv ts =
 
 let define_types tenv venv defs =
     let (res, _) = derecurse_types tenv venv defs in
-    let (aliases, defs) = List.fold_left2
-        (fun (tenv, h) (name, params, typ) def ->
-            if params = []
-            then begin
-                register name typ ; (StrMap.add name typ tenv, h)
-            end else (tenv, def::h))
-        (tenv.aliases, tenv.defs) res defs
-    in { tenv with aliases ; defs }
+    let aliases = List.fold_left
+        (fun aliases (name, params, typ) ->
+            if params = [] then register name typ ;
+            StrMap.add name (typ, params) aliases
+        )
+        tenv.aliases res
+    in
+    { tenv with aliases }
 
 let define_abstract tenv name vs =
     if StrMap.mem name tenv.abs

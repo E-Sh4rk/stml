@@ -51,7 +51,7 @@ let proj_ab x =
   end
 
 type clist('a) = Nil | Cons('a, clist('a))
-let rec map_clist f lst = (*(lst:clist('a)) =*)
+let rec map_clist f (lst:clist('a)) =
   match lst with
   | Cons(v,tail) -> Cons(f v, map_clist f tail)
   | Nil -> Nil
