@@ -107,8 +107,7 @@ let derecurse_types tenv venv defs =
     let rec derecurse_types defs =
         List.iter (fun (name, params, def) ->
             Hashtbl.add henv name (def, params, [])) defs ;
-        let rec get_name oargs name =
-            let args = match oargs with None -> [] | Some args -> args in
+        let rec get_def args name =
             match Hashtbl.find_opt henv name with
             | Some (def, params, lst) ->
                 let cached = lst |> List.find_opt (fun (args',_) ->
@@ -121,24 +120,23 @@ let derecurse_types tenv venv defs =
                         let local = List.combine params args |> List.to_seq |> StrMap.of_seq in
                         let t = aux local def in
                         eqs := (v,t)::!eqs ;
-                        v
+                        Some v
                     with Invalid_argument _ ->
                         raise (TypeDefinitionError (Printf.sprintf "Wrong arity for type %s!" name))
                     end
-                | Some (_, v) -> v
+                | Some (_, v) -> Some v
                 end
+            | None -> None
+        and get_name oargs name =
+            let args = match oargs with None -> [] | Some args -> args in
+            match get_def args name with
+            | Some v -> TVar.typ v
             | None ->
                 begin match get_alias tenv name args with
-                | Some t ->
-                    let v = TVar.mk_unregistered () in
-                    eqs := (v,t)::!eqs ;
-                    v
+                | Some t -> t
                 | None ->
                     begin match get_abstract_type tenv name oargs with
-                    | Some t ->
-                        let v = TVar.mk_unregistered () in
-                        eqs := (v,t)::!eqs ;
-                        v    
+                    | Some t -> t
                     | None -> raise (TypeDefinitionError (Printf.sprintf "Type %s undefined!" name))
                     end    
                 end    
@@ -162,11 +160,10 @@ let derecurse_types tenv venv defs =
                     TVar.typ t
                 end
             | TBase tb -> type_base_to_typ tb
-            | TCustom n ->
-                get_name None n |> Sstt.Ty.mk_var
+            | TCustom n -> get_name None n
             | TApp (n, args) ->
                 let args = args |> List.map (aux lcl) in
-                get_name (Some args) n |> Sstt.Ty.mk_var
+                get_name (Some args) n
             | TAtom name -> get_atom tenv name |> mk_atom
             | TTag (name, t) -> mk_tag (get_tag tenv name) (aux lcl t)
             | TTuple ts -> mk_tuple (List.map (aux lcl) ts)
@@ -211,7 +208,7 @@ let derecurse_types tenv venv defs =
         let res = defs |> List.map (fun (name, params, _) ->
             let params = List.map (fun _ -> TVar.mk_unregistered ()) params in
             let args = params |> List.map TVar.typ in
-            let node = get_name (Some args) name in
+            let node = get_def args name |> Option.get in
             name, params, node) in
         List.iter (fun (name, _, _) -> Hashtbl.remove henv name) defs ;
         res
