@@ -5,7 +5,7 @@ type objF('a) = { f :? 'a ; proto :? objF('a) ..}
 let rec call_f (o:objF('a)) =
   if o is { f : any ..} then o.f
   else if o is { proto : any ..}
-  then call_f (o.proto)
+  then call_f o.proto
   else ()
 
 (* ========= ABSTRACT TYPES ======== *)

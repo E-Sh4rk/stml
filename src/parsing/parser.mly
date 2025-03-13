@@ -204,14 +204,17 @@ simple_term:
 | lhs=simple_term_nocons CONS rhs=simple_term { annot $startpos $endpos (Cons (lhs, rhs)) }
 
 simple_term_nocons:
+  a=simple_term_nocons_noapp { a }
+| a=simple_term_nocons b=simple_term_nocons_noapp { annot $startpos $endpos (App (a, b)) }
+| p=proj a=simple_term_nocons_noapp { annot $startpos $endpos (Projection (p, a)) }
+| a=simple_term_nocons_noapp s=infix_term b=simple_term_nocons_noapp { double_app $startpos $endpos s a b }
+| p=prefix_term a=simple_term_nocons_noapp { annot $startpos $endpos (App (p, a)) }
+| LT t=typ GT { annot $startpos $endpos (Abstract t) }
+
+simple_term_nocons_noapp:
   a=atomic_term { a }
-| a=simple_term_nocons b=atomic_term { annot $startpos $endpos (App (a, b)) }
-| p=proj a=atomic_term { annot $startpos $endpos (Projection (p, a)) }
-| a=atomic_term s=infix_term b=atomic_term { double_app $startpos $endpos s a b }
-| p=prefix_term a=atomic_term { annot $startpos $endpos (App (p, a)) }
 | a=atomic_term POINT id=ID { annot $startpos $endpos (Projection (Field id, a)) }
 | a=atomic_term DIFF id=ID { annot $startpos $endpos (RecordUpdate (a,id,None)) }
-| LT t=typ GT { annot $startpos $endpos (Abstract t) }
 
 proj:
 | FST { Pi(2,0) } | SND { Pi(2,1) } | HD { Hd } | TL { Tl }
