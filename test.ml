@@ -1,3 +1,20 @@
+(* ========= TESTS OBJECTS ======== *)
+
+
+type objF('a) = { f : 'a ..} | { proto : objF('a) ..}
+
+let call_f call_f (o:objF('a)) =
+  if o is { f : any ..} then o.f
+  else if o is { proto : any ..}
+  then call_f (o.proto)
+  else ()
+
+  let call_f call_f (o:objF('a)) =
+    if o is { f : any ..} then (o.f)
+    else call_f (o.proto)
+  
+(* TODO: fix (record projection seems broken) *)
+
 (* ========= ABSTRACT TYPES ======== *)
 
 abstract type cav(-'a)
