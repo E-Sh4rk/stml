@@ -62,7 +62,7 @@ let pp_atom = Sstt.Atoms.Atom.pp
 let compare_atom = Sstt.Atoms.Atom.compare
 let define_atom name = name |> Sstt.Atoms.Atom.mk
 let mk_atom atom = atom |> Sstt.Descr.mk_atom |> Sstt.Ty.mk_descr
-let atom_any = Sstt.Atoms.any () |> Sstt.Descr.mk_atoms |> Sstt.Ty.mk_descr
+let atom_any = Sstt.Atoms.any |> Sstt.Descr.mk_atoms |> Sstt.Ty.mk_descr
 
 type tag = Sstt.TagComp.Tag.t
 let pp_tag = Sstt.TagComp.Tag.pp
@@ -72,7 +72,7 @@ let mk_tag tag ty = Sstt.Descr.mk_tag (tag, ty) |> Sstt.Ty.mk_descr
 let destruct_tag tag ty =
   Sstt.Ty.get_descr ty |> Sstt.Descr.get_tags |> Sstt.Tags.get tag
   |> Sstt.TagComp.as_atom |> snd
-let tag_any = Sstt.Tags.any () |> Sstt.Descr.mk_tags |> Sstt.Ty.mk_descr
+let tag_any = Sstt.Tags.any |> Sstt.Descr.mk_tags |> Sstt.Ty.mk_descr
 
 type variance = Cov | Cav | Inv
 type abstract = Sstt.TagComp.Tag.t
@@ -91,7 +91,7 @@ let mk_abstract_any = Sstt.Extensions.Abstracts.mk_any
 let true_typ = Sstt.Extensions.Bools.bool true
 let false_typ = Sstt.Extensions.Bools.bool false
 let bool_typ = Sstt.Extensions.Bools.any
-let int_typ = Sstt.Intervals.any () |> Sstt.Descr.mk_intervals |> Sstt.Ty.mk_descr
+let int_typ = Sstt.Intervals.any |> Sstt.Descr.mk_intervals |> Sstt.Ty.mk_descr
 let float_typ = Sstt.Extensions.Floats.any
 let char_typ = Sstt.Extensions.Chars.any
 let unit_typ = Sstt.Descr.mk_tuple [] |> Sstt.Ty.mk_descr
@@ -106,7 +106,7 @@ let char_interval c1 c2 = Sstt.Extensions.Chars.interval (c1, c2)
 let single_string str = Sstt.Extensions.Strings.str str
 
 let mk_tuple ts = ts |> Sstt.Descr.mk_tuple |> Sstt.Ty.mk_descr
-let tuple_any = Sstt.Tuples.any () |> Sstt.Descr.mk_tuples |> Sstt.Ty.mk_descr
+let tuple_any = Sstt.Tuples.any |> Sstt.Descr.mk_tuples |> Sstt.Ty.mk_descr
 let tuple_n n = Sstt.Tuples.TupleComp.any n |> Sstt.Descr.mk_tuplecomp |> Sstt.Ty.mk_descr
 
 let pi n i t =
@@ -140,7 +140,7 @@ let record_dnf t =
     bindings, opened
   )
 let record_any =
-  Sstt.Records.any () |> Sstt.Descr.mk_records |> Sstt.Ty.mk_descr
+  Sstt.Records.any |> Sstt.Descr.mk_records |> Sstt.Ty.mk_descr
 
 let empty_closed_record = mk_record false []
 
@@ -166,7 +166,7 @@ let remove_field t field =
 let mk_arrow t1 t2 =
   Sstt.Descr.mk_arrow (t1,t2) |> Sstt.Ty.mk_descr
 
-let arrow_any = Sstt.Arrows.any () |> Sstt.Descr.mk_arrows |> Sstt.Ty.mk_descr
+let arrow_any = Sstt.Arrows.any |> Sstt.Descr.mk_arrows |> Sstt.Ty.mk_descr
 
 let domain t =
   let a = Sstt.Ty.get_descr t |> Sstt.Descr.get_arrows in
