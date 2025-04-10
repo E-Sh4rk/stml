@@ -16,14 +16,20 @@ abstract type inv('a)
 
 let test_neg1 = <cav & ~cav(int)>
 let test_neg2 = < ~cav(int)>
+let test_neg3 = <cov & ~cov(int)>
+let test_neg4 = < ~cov(int)>
+let test_neg5 = <inv & ~inv(int)>
+let test_neg6 = < ~inv(int)>
 
-let cav = <cav(empty)>
-let cav = <cav(int) & cav(bool) & ~cav(any)>
-let cav : cav(int|bool) & ~cav(any) = cav
-let cov = <cov(any)>
-let cov = <cov(int) & cov(bool)>
+let cav = <cav(A) & cav(~A)>
+let cav = <cav(A|B) & cav(B|C)>
+let cav = <cav(A|B) & cav(B|C) & ~cav(any)>
 
-let inv = <inv(int) & inv(bool) & inv(int|bool)>
+let cov = <cov(A) & cov(~A)>
+let cov = <cov(A|B) & cov(B|C)>
+let cov = <cov(A|B) & cov(B|C) & ~cov(empty)>
+
+let inv = <inv(A) & inv(B) & inv(A|B)>
 
 abstract type ref('a)
 let ref = <'a -> ref('a)>
